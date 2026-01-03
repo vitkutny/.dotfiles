@@ -1,0 +1,114 @@
+#!/usr/bin/env sh
+
+# brew configuration
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+DEFAULT_OUTPUT_NAME="MacBook Pro Speakers"
+WORKROOM_DESK_OUTPUT_NAME="DELL U2724DE"
+WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH=$(( 30 * 60 )) # seconds
+WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED=60 # seconds
+WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED_CHECK_TIME=0
+WORKROOM_DESK_OUTPUT_SHORTCUTS_ON="Workroom Desk Speakers On"
+WORKROOM_DESK_OUTPUT_SHORTCUTS_OFF="Workroom Desk Speakers Off"
+
+LAST_OUTPUT="$(SwitchAudioSource -c)"
+SWITCH_DETECT_INTERVAL=1
+SWITCH_DETECT_SHORTCUTS_DELAY=5
+LAST_OUTPUT_ACTIVE_TIME=$(date +%s)
+
+screen_is_locked() {
+  [ "$(/usr/sbin/ioreg -n Root -d1 -a \
+    | /usr/bin/plutil \
+      -extract 'IOConsoleUsers.0.CGSSessionScreenIsLocked' \
+      raw -)" \
+    == 'true' ]
+
+  return $?
+}
+
+CAFFEINATE_PID=0
+
+caffeinate_start() {
+  if [[ $CAFFEINATE_PID -eq 0 ]]; then
+    caffeinate -d & # Run in background
+    CAFFEINATE_PID=$! # Capture the sub-process PID
+  fi
+}
+
+caffeinate_stop() {
+  if [[ $CAFFEINATE_PID -gt 0 ]]; then
+    kill "$CAFFEINATE_PID"
+    CAFFEINATE_PID=0
+  fi
+}
+
+# https://linuxvox.com/blog/bash-how-do-i-make-sub-processes-of-a-script-be-terminated-when-the-script-is-terminated/
+# Cleanup function: Terminate the sub-process if it exists
+cleanup_on_exit() {
+  caffeinate_stop
+  exit 0
+}
+
+# Trap SIGINT (Ctrl+C) and EXIT (normal script exit) to trigger cleanup
+trap cleanup_on_exit SIGINT EXIT
+
+while true;
+do
+  sleep ${SWITCH_DETECT_INTERVAL}
+  CURRENT_OUTPUT="$(SwitchAudioSource -c)"
+
+  if [ "${CURRENT_OUTPUT}" = "${LAST_OUTPUT}" ]; then
+    # output is not changed
+
+    if [[ "$(pmset -g | grep 'sleep prevented by')" == *"coreaudiod"* ]]; then
+      # audio is playing
+      LAST_OUTPUT_ACTIVE_TIME=$(date +%s)
+
+      if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+        caffeinate_start # prevents display sleep
+      else
+        caffeinate_stop
+      fi
+    else
+      # audio is not playing
+      caffeinate_stop
+      CURRENT_OUTPUT_ACTIVE_TIME=$(date +%s)
+      CURRENT_OUTPUT_ACTIVE_TIME_DIFF=$((CURRENT_OUTPUT_ACTIVE_TIME - LAST_OUTPUT_ACTIVE_TIME))
+
+      if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+        if [[ $CURRENT_OUTPUT_ACTIVE_TIME_DIFF -gt $WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH ]]; then
+          echo "[$(date)] switching \"${CURRENT_OUTPUT}\" to \"${DEFAULT_OUTPUT_NAME}\" after ${CURRENT_OUTPUT_ACTIVE_TIME_DIFF} seconds of inactivity"
+          SwitchAudioSource -s "${DEFAULT_OUTPUT_NAME}"
+          LAST_OUTPUT_ACTIVE_TIME=$(date +%s) # prevents loop if switch fails
+        fi
+
+        # screen_is_locked is checked once every $WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED seconds of inactivity
+        if [[ $CURRENT_OUTPUT_ACTIVE_TIME_DIFF -gt $WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED ]] \
+          && [[ $((CURRENT_OUTPUT_ACTIVE_TIME - WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED_CHECK_TIME)) -gt $WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED ]] \
+          && WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED_CHECK_TIME=$(date +%s) \
+          && (screen_is_locked 2> /dev/null); then
+          echo "[$(date)] switching \"${CURRENT_OUTPUT}\" to \"${DEFAULT_OUTPUT_NAME}\" after ${WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED} seconds of inactivity when locked"
+          SwitchAudioSource -s "${DEFAULT_OUTPUT_NAME}"
+          LAST_OUTPUT_ACTIVE_TIME=$(date +%s) # prevents loop if switch fails
+        fi
+      fi
+    fi
+
+    continue
+  fi
+
+  echo "[$(date)] speaker switched from \"${LAST_OUTPUT}\" to \"${CURRENT_OUTPUT}\""
+
+  if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+    echo "[$(date)] running shortcut \"${WORKROOM_DESK_OUTPUT_SHORTCUTS_ON}\""
+    shortcuts run "${WORKROOM_DESK_OUTPUT_SHORTCUTS_ON}" > /dev/null
+    sleep ${SWITCH_DETECT_SHORTCUTS_DELAY}
+  elif [ "${LAST_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+    echo "[$(date)] running shortcut \"${WORKROOM_DESK_OUTPUT_SHORTCUTS_OFF}\""
+    shortcuts run "${WORKROOM_DESK_OUTPUT_SHORTCUTS_OFF}" > /dev/null
+    sleep ${SWITCH_DETECT_SHORTCUTS_DELAY}
+  fi
+
+  LAST_OUTPUT="${CURRENT_OUTPUT}"
+  LAST_OUTPUT_ACTIVE_TIME=$(date +%s)
+done

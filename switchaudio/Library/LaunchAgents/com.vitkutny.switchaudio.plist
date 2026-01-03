@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.vitkutny.switchaudio</string>
+        <key>Program</key>
+        <string>/Users/vitkutny/.local/bin/switchaudio</string>
+        <key>StandardOutPath</key>
+        <string>/Users/vitkutny/Library/Logs/com.vitkutny.switchaudio/switchaudio.log</string>
+        <key>StandardErrorPath</key>
+        <string>/Users/vitkutny/Library/Logs/com.vitkutny.switchaudio/switchaudio.log</string>
+        <key>RunAtLoad</key>
+        <true/>
+    </dict>
+</plist>
+
