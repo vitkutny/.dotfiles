@@ -1,0 +1,110 @@
+#!/usr/bin/env sh
+
+screen_is_locked() {
+  [ "$(/usr/sbin/ioreg -n Root -d1 -a \
+    | /usr/bin/plutil \
+      -extract 'IOConsoleUsers.0.CGSSessionScreenIsLocked' \
+      raw -)" \
+    == 'true' ]
+
+  return $?
+}
+
+LOG_DIRECTORY=~/Library/Logs/com.vitkutny.backup
+mkdir -p "$LOG_DIRECTORY"
+: > "$LOG_DIRECTORY/backup.log"
+RUN_FILE="$LOG_DIRECTORY/backup-run.log"
+TM_VOLUME_NAME=TimeMachine
+PHOTOS_VOLUME_NAME=OSXPhotos
+
+date | tee -a "$RUN_FILE"
+
+if screen_is_locked 2> /dev/null; then
+	echo "screen is locked"
+	date | tee -a "$RUN_FILE"
+	exit 0
+fi
+
+# brew configuration
+eval "$(/opt/homebrew/bin/brew shellenv)"
+# Brewfile backup
+brew bundle dump --describe --global --force
+
+infat --config="$HOME/.config/infat/infat.toml" init
+
+# homeserver backup
+if nc -z homeserver.local 22; then
+	mkdir -p ~/Documents/Backup/homeserver
+	rsync -ut \
+		homeserver.local:/srv/backup.zip \
+		~/Documents/Backup/homeserver/homeserver.zip
+fi
+
+if screen_is_locked 2> /dev/null; then
+	echo "screen is locked"
+	date | tee -a "$RUN_FILE"
+	exit 0
+fi
+
+UNMOUNT_PHOTOS=0
+
+if ! [ -d "/Volumes/$PHOTOS_VOLUME_NAME" ] && diskutil mount "$PHOTOS_VOLUME_NAME"; then
+	UNMOUNT_PHOTOS=1
+	date
+	osxphotos export /Volumes/"$PHOTOS_VOLUME_NAME"/export \
+		--library ~/Pictures/Photos\ Library.photoslibrary \
+		--export-by-date \
+		--update \
+		--cleanup \
+		--report "$LOG_DIRECTORY/osxphotos.csv" \
+	;
+	date
+fi
+
+UNMOUNT_TM=0
+
+# time machine backup – ignored if volume already connected – TM probably in use
+if ! [ -d "/Volumes/$TM_VOLUME_NAME" ] && diskutil mount "$TM_VOLUME_NAME"; then
+	UNMOUNT_TM=1
+	date
+	tmutil startbackup --block
+	date
+fi
+
+
+DISK_EJECT=0
+
+if [ $UNMOUNT_PHOTOS -eq 1 ] && [ $UNMOUNT_TM -eq 1 ] && ! [ -d "/Volumes/CrossOver" ] && ! [ -d "/Volumes/Steam" ]; then
+	DISK_EJECT=1
+fi
+
+
+# unmount when finished
+for i in {1..3}; do
+	if [ $UNMOUNT_PHOTOS -eq 0 ] && [ $UNMOUNT_TM -eq 0 ]; then
+		break
+	fi
+
+	sleep 10
+
+	if [ $UNMOUNT_PHOTOS -eq 1 ] && diskutil unmount "$PHOTOS_VOLUME_NAME"; then
+		UNMOUNT_PHOTOS=0
+	fi
+
+	if [ $UNMOUNT_TM -eq 1 ] && diskutil unmount "$TM_VOLUME_NAME"; then
+		UNMOUNT_TM=0
+	fi
+done
+
+if [ $DISK_EJECT -eq 1 ]; then
+	DISK_EJECT=0
+	sleep 10
+
+	# check again if no volume was mounted after setting DISK_EJECT=1
+	if ! [ -d "/Volumes/$TM_VOLUME_NAME" ] && ! [ -d "/Volumes/$PHOTOS_VOLUME_NAME" ] && ! [ -d "/Volumes/CrossOver" ] && ! [ -d "/Volumes/Steam" ]; then
+		diskutil eject "$TM_VOLUME_NAME"
+	fi
+fi
+
+date | tee -a "$RUN_FILE"
+
