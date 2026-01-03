@@ -1,0 +1,8 @@
+[user]
+	signingkey = 665243B7093F6AA9
+	name = Vít Kutný
+	email = vit@kutny.cz
+[commit]
+	gpgsign = true
+[tag]
+	gpgSign = true

@@ -1,0 +1,24 @@
+[extensions]
+toml = "MacVim"
+
+[schemes]
+xcdoc = "Xcode"
+xcarchive = "Xcode"
+xcode-ci-handler = "Xcode"
+xcode-ci = "Xcode"
+x-source-tag = "Xcode"
+x-xcode-documentation = "Xcode"
+x-xcode-ci-build-report-feedback = "Xcode"
+xcdevice = "Xcode"
+steam = "Steam"
+x-swift-package-repository-authentication = "Xcode"
+doc = "Xcode"
+steamlink = "Steam"
+xcode = "Xcode"
+apple-reference-documentation = "Xcode"
+
+[types]
+"com.apple.ical.backup-package" = "Calendar"
+"public.data" = "MacVim"
+"public.unix-executable" = "MacVim"
+"public.plain-text" = "MacVim"
