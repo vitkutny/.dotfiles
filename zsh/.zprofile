@@ -11,3 +11,6 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key
 export GPG_TTY=$(tty)
 
+export EDITOR=vim
+export VISUAL=vim
+

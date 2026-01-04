@@ -38,6 +38,12 @@ zle -N down-line-or-beginning-search
 bindkey "^[[A" up-line-or-beginning-search # Up
 bindkey "^[[B" down-line-or-beginning-search # Down
 
+# https://github.com/ohmyzsh/ohmyzsh/blob/master/lib/key-bindings.zsh
+# Edit the current command line in $VISUAL (or $EDITOR / `vi` if not set)
+autoload -U edit-command-line
+zle -N edit-command-line
+bindkey '\C-x\C-e' edit-command-line
+
 # https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh
 autoload -Uz compinit
 compinit
