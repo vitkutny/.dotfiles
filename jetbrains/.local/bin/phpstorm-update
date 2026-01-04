@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+set -ex
+
+# replace icon
+cp ~/Pictures/icons/datagrip.icns ~/Applications/DataGrip.app/Contents/Resources/phpstorm.icns
+cp ~/Pictures/icons/webstorm.icns ~/Applications/WebStorm.app/Contents/Resources/phpstorm.icns
+
+# update Info.plist
+defaults write ~/Applications/DataGrip.app/Contents/Info.plist CFBundleName DataGrip
+defaults write ~/Applications/WebStorm.app/Contents/Info.plist CFBundleName WebStorm
+
+defaults write ~/Applications/DataGrip.app/Contents/Info.plist CFBundleIdentifier com.jetbrains.DataGrip
+defaults write ~/Applications/WebStorm.app/Contents/Info.plist CFBundleIdentifier com.jetbrains.WebStorm
+
+# convert Info.plist from binary to xml
+plutil -convert xml1 ~/Applications/DataGrip.app/Contents/Info.plist
+plutil -convert xml1 ~/Applications/WebStorm.app/Contents/Info.plist
+
+# remove finder attr before signing
+xattr -rc ~/Applications/DataGrip.app
+xattr -rc ~/Applications/WebStorm.app
+
+# sign
+codesign -f -s - ~/Applications/DataGrip.app
+codesign -f -s - ~/Applications/WebStorm.app
+
