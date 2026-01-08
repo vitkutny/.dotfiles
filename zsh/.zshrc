@@ -48,6 +48,9 @@ bindkey '\C-x\C-e' edit-command-line
 autoload -Uz compinit
 compinit
 
+# https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration
+FZF_ALT_C_COMMAND= source <(fzf --zsh)
+
 # aliases
 alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cli'
 

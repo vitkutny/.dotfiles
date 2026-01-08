@@ -13,4 +13,6 @@ export GPG_TTY=$(tty)
 
 export EDITOR=vim
 export VISUAL=vim
+# setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
+bindkey -e
 

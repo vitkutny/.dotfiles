@@ -4,6 +4,8 @@ tap "vcmi/vcmi"
 brew "coreutils"
 # Perl lib for reading and writing EXIF metadata
 brew "exiftool"
+# Command-line fuzzy finder written in Go
+brew "fzf"
 # GNU Privacy Guard (OpenPGP)
 brew "gnupg"
 # Tool to set default openers for file formats and url schemes on macOS
