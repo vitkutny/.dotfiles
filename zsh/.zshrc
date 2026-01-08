@@ -2,7 +2,7 @@
 autoload -U promptinit; promptinit
 prompt pure > /dev/null
 
-if [ "$(prompt -c)" != "Current prompt is not a theme." ]; then
+if [ "$(prompt -c | tr -d "\n" | tr -s ' ')" = "Current prompt theme is: pure" ]; then
 	zstyle :prompt:pure:path color default
 	zstyle ':prompt:pure:prompt:*' color default
 	#zstyle :prompt:pure:prompt:error color red
