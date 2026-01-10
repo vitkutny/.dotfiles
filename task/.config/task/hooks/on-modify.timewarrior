@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+exec /opt/homebrew/share/doc/timew/ext/on-modify.timewarrior
+

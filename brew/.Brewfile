@@ -26,6 +26,12 @@ brew "smartmontools"
 brew "stow"
 # Change macOS audio source from the command-line
 brew "switchaudio-osx"
+# Feature-rich console based todo list manager
+brew "task"
+# Terminal user interface for taskwarrior
+brew "taskwarrior-tui"
+# Command-line time tracking application
+brew "timewarrior"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Executes a program periodically, showing output fullscreen

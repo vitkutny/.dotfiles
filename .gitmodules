@@ -1,0 +1,3 @@
+[submodule "timewarrior/submodules/timewarrior_zsh_completion"]
+	path = timewarrior/submodules/timewarrior_zsh_completion
+	url = git@github.com:ianmkenney/timewarrior_zsh_completion.git

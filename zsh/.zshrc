@@ -44,6 +44,11 @@ autoload -U edit-command-line
 zle -N edit-command-line
 bindkey '\C-x\C-e' edit-command-line
 
+# before compinit
+fpath=(
+    ~/.local/share/zsh/site-functions
+    $fpath
+)
 # https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh
 autoload -Uz compinit
 compinit
@@ -53,4 +58,7 @@ FZF_ALT_C_COMMAND= source <(fzf --zsh)
 
 # aliases
 alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cli'
+alias t='task'
+alias tt='taskwarrior-tui'
+alias tw='timew'
 

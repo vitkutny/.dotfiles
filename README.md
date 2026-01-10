@@ -1,5 +1,11 @@
 # .dotfiles
 
+```sh
+cd ~
+git clone --recurse-submodules git@github.com:vitkutny/.dotfiles.git
+cd .dotfiles
+```
+
 https://brew.sh
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
