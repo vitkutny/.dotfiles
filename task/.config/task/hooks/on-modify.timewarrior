@@ -1,4 +1,24 @@
 #!/usr/bin/env sh
 
-exec /opt/homebrew/share/doc/timew/ext/on-modify.timewarrior
+# The on-modify event is triggered separately for each task modified. This hook
+# script can accept/reject the modification. Processing will continue.
+
+# Input:
+# - line of JSON for the original task
+# - line of JSON for the modified task, the diff being the modification
+read -r original_task
+read -r modified_task
+
+if [ "$(echo "$original_task" | jq -r '.start')" = "null" ] && [ "$(echo "$modified_task" | jq -r '.start')" != "null" ]; then
+	active_task_uuids=$(task +ACTIVE rc.context=none rc.verbose=off uuids)
+
+	if ! [ -z "$active_task_uuids" ]; then
+		task stop "$active_task_uuids" # only single active task allowed
+	fi
+fi
+
+exec /opt/homebrew/share/doc/timew/ext/on-modify.timewarrior <<EOF
+	$original_task
+	$modified_task
+EOF
 
