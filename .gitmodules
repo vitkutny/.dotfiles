@@ -1,3 +1,6 @@
 [submodule "timewarrior/submodules/timewarrior_zsh_completion"]
 	path = timewarrior/submodules/timewarrior_zsh_completion
-	url = git@github.com:ianmkenney/timewarrior_zsh_completion.git
+	url = https://github.com/ianmkenney/timewarrior_zsh_completion.git
+[submodule "zsh/submodules/fzf-tab"]
+	path = zsh/submodules/fzf-tab
+	url = https://github.com/Aloxaf/fzf-tab.git
