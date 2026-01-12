@@ -17,8 +17,37 @@ if [ "$(echo "$original_task" | jq -r '.start')" = "null" ] && [ "$(echo "$modif
 	fi
 fi
 
-exec /opt/homebrew/share/doc/timew/ext/on-modify.timewarrior <<EOF
-	$original_task
-	$modified_task
+original_task_tagged="$original_task"
+modified_task_tagged="$modified_task"
+
+if [ "$(echo "$original_task_tagged" | jq -r '.description')" != "null" ]; then
+	original_task_tagged="$(echo "$original_task_tagged" | jq --compact-output '.description |= "DESCRIPTION["+.+"]"')"
+fi
+
+if [ "$(echo "$modified_task_tagged" | jq -r '.description')" != "null" ]; then
+	modified_task_tagged="$(echo "$modified_task_tagged" | jq --compact-output '.description |= "DESCRIPTION["+.+"]"')"
+fi
+
+if [ "$(echo "$original_task_tagged" | jq -r '.project')" != "null" ]; then
+	original_task_tagged="$(echo "$original_task_tagged" | jq --compact-output '.project |= "PROJECT["+.+"]"')"
+fi
+
+if [ "$(echo "$modified_task_tagged" | jq -r '.project')" != "null" ]; then
+	modified_task_tagged="$(echo "$modified_task_tagged" | jq --compact-output '.project |= "PROJECT["+.+"]"')"
+fi
+
+if [ "$(echo "$original_task_tagged" | jq -r '.uuid')" != "null" ]; then
+	original_task_tagged="$(echo "$original_task_tagged" | jq --compact-output '.tags += ["TASK["+.uuid+"]"]')"
+fi
+
+if [ "$(echo "$modified_task_tagged" | jq -r '.uuid')" != "null" ]; then
+	modified_task_tagged="$(echo "$modified_task_tagged" | jq --compact-output '.tags += ["TASK["+.uuid+"]"]')"
+fi
+
+/opt/homebrew/share/doc/timew/ext/on-modify.timewarrior >/dev/null <<EOF
+	$original_task_tagged
+	$modified_task_tagged
 EOF
+
+echo $modified_task
 
