@@ -12,6 +12,8 @@ brew "gnupg"
 brew "infat"
 # Mac App Store command-line interface
 brew "mas"
+# Like sed, awk, cut, join & sort for name-indexed data such as CSV
+brew "miller"
 # Simple tool to make locally trusted development certificates
 brew "mkcert"
 # Shell command parallelization utility
