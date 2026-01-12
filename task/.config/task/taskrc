@@ -6,6 +6,7 @@ news.version=3.4.2
 
 data.location=~/.local/share/task
 hooks.location=~/.config/task/hooks
+sync.local.server_dir=~/Library/Mobile Documents/iCloud~com~mav~taskchamp/Documents/taskchamp
 
 # Color theme (uncomment one to use)
 #include light-16.theme
@@ -24,5 +25,8 @@ include dark-16.theme
 #include solarized-light-256.theme
 #include no-color.theme
 
-sync.local.server_dir=~/Library/Mobile Documents/iCloud~com~mav~taskchamp/Documents/taskchamp
+report.prompt.columns=start.age,description.truncated
+report.prompt.labels=,
+report.prompt.filter=+ACTIVE
 
+# context config generated below – not versioned

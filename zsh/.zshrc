@@ -11,8 +11,25 @@ if [ "$(prompt -c | tr -d "\n" | tr -s ' ')" = "Current prompt theme is: pure" ]
 	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#disable-pure-terminal-title-updates
 	prompt_pure_set_title() {}
 
-	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#show-exit-code-of-all-piped-commands-in-rprompt
+	# custom prompt on newline
+	PROMPT='$prompt_newline'$PROMPT
+
+	# TaskWarrior prompt
+	prompt_taskwarrior=''
+	precmd_prompt_taskwarrior() {
+		prompt_taskwarrior="$(task rc.context=none rc.verbose=off rc._forcecolor=on prompt 2>/dev/null | xargs)"
+
+		if ! [ -z "$prompt_taskwarrior" ]; then
+			prompt_taskwarrior="💻 $prompt_taskwarrior"
+		fi
+	}
+	add-zsh-hook precmd precmd_prompt_taskwarrior
+	PROMPT='$prompt_taskwarrior '$PROMPT
+
 	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#show-system-time-in-prompt
+	PROMPT='⏰ %F{$prompt_pure_colors[execution_time]}%*%f '$PROMPT
+
+	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#show-exit-code-of-all-piped-commands-in-rprompt
 	prompt_pipestatus='0'
 	prompt_pipestatus_color=green
 	precmd_prompt_pipestatus() {
@@ -26,8 +43,9 @@ if [ "$(prompt -c | tr -d "\n" | tr -s ' ')" = "Current prompt theme is: pure" ]
 			fi
 		done
 	}
+
 	add-zsh-hook precmd precmd_prompt_pipestatus
-	PROMPT='%F{$prompt_pipestatus_color}[$prompt_pipestatus]%f %F{$prompt_pure_colors[execution_time]}%*%f $prompt_newline'$PROMPT
+	PROMPT='%F{$prompt_pipestatus_color}[$prompt_pipestatus]%f '$PROMPT
 fi
 
 # https://coderwall.com/p/jpj_6q/zsh-better-history-searching-with-arrow-keys
