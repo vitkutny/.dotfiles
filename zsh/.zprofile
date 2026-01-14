@@ -8,6 +8,9 @@ export PATH="$PATH:/Users/vitkutny/Library/Application Support/JetBrains/Toolbox
 # https://docs.brew.sh/Manpage#shellenv-shell-
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# ~/.local/bin – on last position – overriding of system binaries not allowed
+export PATH="$PATH:$HOME/.local/bin"
+
 # https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key
 export GPG_TTY=$(tty)
 

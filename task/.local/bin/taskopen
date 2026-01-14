@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# simplified version of https://github.com/jschlatow/taskopen
+
+task_annotations="$(task $@ export | jq -r '.[].annotations.[]?.description')"
+
+task_annotations_empty=0
+if [ -z "$task_annotations" ]; then
+	task_annotations_empty=1
+	task_annotations="No annotation found for task ${@}"
+fi
+
+selected_annotation="$(echo "$task_annotations" | fzf --style=full --layout=reverse --border --border-label=" taskopen " --header="Please select an annotation to open")"
+
+if [ -z "$selected_annotation" ] || [ "$task_annotations_empty" -eq 1 ]; then
+	exit 0
+fi
+
+# replace leading ~ with $HOME
+selected_annotation_file="${selected_annotation/#\~/$HOME}"
+
+# open file
+if open "$selected_annotation_file" 2>/dev/null; then
+	exit 0
+fi
+
+# or edit file
+if [ -f "$selected_annotation_file" ]; then
+	if ! [ -z "$EDITOR" ]; then
+		exec $EDITOR "$selected_annotation_file"
+	fi
+
+	exec vim "$selected_annotation_file"
+fi
+
+# or view selected annotation
+exec view --not-a-term - <<< "$selected_annotation"
+

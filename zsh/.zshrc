@@ -80,6 +80,7 @@ FZF_ALT_C_COMMAND= source <(fzf --zsh)
 # aliases
 alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cli'
 alias t='task'
+alias to='taskopen'
 alias tt='taskwarrior-tui'
 alias tw='timew'
 

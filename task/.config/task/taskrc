@@ -29,4 +29,6 @@ report.prompt.columns=start.age,description.truncated
 report.prompt.labels=,
 report.prompt.filter=+ACTIVE
 
+uda.taskwarrior-tui.shortcuts.1=taskopen
+
 # context config generated below – not versioned
