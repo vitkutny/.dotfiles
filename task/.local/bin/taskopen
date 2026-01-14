@@ -3,11 +3,28 @@
 
 IFS=$'\n'
 FZF_OPTS=(
-	--style=full
 	--layout=reverse
-	--border
-	--border-label=" taskopen "
 )
+
+if [ -z "$FULLSCREEN" ]; then
+	FULLSCREEN=0
+
+	if [ "$(ps -p "$PPID" -o command | tail -n1)" = "taskwarrior-tui" ]; then
+		FULLSCREEN=1
+	fi
+fi
+
+if [ "$FULLSCREEN" -eq 1 ]; then
+	FZF_OPTS+=(
+		--style=full
+		--border
+		--border-label=" taskopen "
+	)
+else
+	FZF_OPTS+=(
+		--height="~100%"
+	)
+fi
 
 task_description="$@"
 tasks=($(task $@ export | jq --compact-output '.[]'))
