@@ -9,12 +9,19 @@ FZF_OPTS=(
 	--border-label=" taskopen "
 )
 
-task_annotations=($(task $@ export | jq -r '.[].annotations.[]?.description'))
+task_description="$@"
+tasks=($(task $@ export | jq --compact-output '.[]'))
+
+if [ ${#tasks[@]} -eq 1 ]; then
+	task_description="$(echo $tasks | jq -r '.description')"
+fi
+
+task_annotations=($(echo "${tasks[*]}" | jq -r '.annotations.[]?.description'))
 task_annotations_empty=0
 
 if [ ${#task_annotations[@]} -eq 0 ]; then
 	task_annotations_empty=1
-	task_annotations+=("No annotation found for task ${@}")
+	task_annotations+=("No annotation found for task")
 fi
 
 annotation_actions=()
@@ -43,7 +50,7 @@ if [ ${#annotation_actions[@]} -eq 0 ]; then
 fi
 
 while true; do
-	selected_annotation="$(echo "${task_annotations[*]}" | fzf ${FZF_OPTS[@]} --header="Please select an annotation")"
+	selected_annotation="$(echo "${task_annotations[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an annotation from task \033[4m$task_description\033[0m")")"
 
 	if [ -z "$selected_annotation" ] || [ "$task_annotations_empty" -eq 1 ]; then
 		exit 0
