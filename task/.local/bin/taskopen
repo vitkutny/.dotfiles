@@ -1,37 +1,66 @@
 #!/usr/bin/env sh
 # simplified version of https://github.com/jschlatow/taskopen
 
-task_annotations="$(task $@ export | jq -r '.[].annotations.[]?.description')"
+IFS=$'\n'
+FZF_OPTS=(
+	--style=full
+	--layout=reverse
+	--border
+	--border-label=" taskopen "
+)
 
+task_annotations=($(task $@ export | jq -r '.[].annotations.[]?.description'))
 task_annotations_empty=0
-if [ -z "$task_annotations" ]; then
+
+if [ ${#task_annotations[@]} -eq 0 ]; then
 	task_annotations_empty=1
-	task_annotations="No annotation found for task ${@}"
+	task_annotations+=("No annotation found for task ${@}")
 fi
 
-selected_annotation="$(echo "$task_annotations" | fzf --style=full --layout=reverse --border --border-label=" taskopen " --header="Please select an annotation to open")"
+annotation_actions=()
 
-if [ -z "$selected_annotation" ] || [ "$task_annotations_empty" -eq 1 ]; then
-	exit 0
+if ! [ -z "$OPENER" ]; then
+	annotation_actions+=("$OPENER")
 fi
 
-# replace leading ~ with $HOME
-selected_annotation_file="${selected_annotation/#\~/$HOME}"
-
-# open file
-if open "$selected_annotation_file" 2>/dev/null; then
-	exit 0
+if ! [ -z "$VISUAL" ]; then
+	annotation_actions+=("$VISUAL")
 fi
 
-# or edit file
-if [ -f "$selected_annotation_file" ]; then
-	if ! [ -z "$EDITOR" ]; then
-		exec $EDITOR "$selected_annotation_file"
+if ! [ -z "$EDITOR" ]; then
+	annotation_actions+=("$EDITOR")
+fi
+
+if ! [ -z "$VIEWER" ]; then
+	annotation_actions+=("$VIEWER")
+fi
+
+annotation_actions_empty=0
+
+if [ ${#annotation_actions[@]} -eq 0 ]; then
+	annotation_actions_empty=1
+	annotation_actions+=("No annotation action defined")
+fi
+
+while true; do
+	selected_annotation="$(echo "${task_annotations[*]}" | fzf ${FZF_OPTS[@]} --header="Please select an annotation")"
+
+	if [ -z "$selected_annotation" ] || [ "$task_annotations_empty" -eq 1 ]; then
+		exit 0
 	fi
 
-	exec vim "$selected_annotation_file"
-fi
+	selected_action=$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an action for \033[4m$selected_annotation\033[0m")")
 
-# or view selected annotation
-exec view --not-a-term - <<< "$selected_annotation"
+	if [ -z "$selected_action" ] || [ "$annotation_actions_empty" -eq 1 ]; then
+		continue
+	fi
+
+	break
+done
+
+# replace leading ~ with $HOME
+selected_annotation="${selected_annotation/#\~/$HOME}"
+
+IFS=' '
+exec $selected_action "$selected_annotation"
 

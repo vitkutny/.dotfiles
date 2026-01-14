@@ -14,8 +14,12 @@ export PATH="$PATH:$HOME/.local/bin"
 # https://docs.github.com/en/authentication/managing-commit-signature-verification/telling-git-about-your-signing-key
 export GPG_TTY=$(tty)
 
+# default commands
 export EDITOR=vim
+export OPENER=open
+export VIEWER=view
 export VISUAL=vim
+
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
 bindkey -e
 
