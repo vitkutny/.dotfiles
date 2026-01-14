@@ -59,12 +59,7 @@ if ! [ -z "$VIEWER" ]; then
 	annotation_actions+=("$VIEWER")
 fi
 
-annotation_actions_empty=0
-
-if [ ${#annotation_actions[@]} -eq 0 ]; then
-	annotation_actions_empty=1
-	annotation_actions+=("No annotation action defined")
-fi
+annotation_actions+=("denotate")
 
 while true; do
 	selected_annotation="$(echo "${task_annotations[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an annotation from task \033[4m$task_description\033[0m")")"
@@ -75,12 +70,27 @@ while true; do
 
 	selected_action=$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an action for \033[4m$selected_annotation\033[0m")")
 
-	if [ -z "$selected_action" ] || [ "$annotation_actions_empty" -eq 1 ]; then
+	if [ -z "$selected_action" ]; then
 		continue
 	fi
 
 	break
 done
+
+if [ "$selected_action" = "denotate" ]; then
+	for task in "${tasks[@]}"; do
+		task_uuid=$(echo $task | jq -r '.uuid')
+		task_annotations=($(echo $task | jq -r '.annotations.[]?.description'))
+
+		for task_annotation in "${task_annotations[@]}"; do
+			if [ "$task_annotation" = "$selected_annotation" ]; then
+				task rc.context=off "uuid:$task_uuid" denotate "$selected_annotation" > /dev/null 2>&1
+			fi
+		done
+	done
+
+	exit 0
+fi
 
 # replace leading ~ with $HOME
 selected_annotation="${selected_annotation/#\~/$HOME}"
