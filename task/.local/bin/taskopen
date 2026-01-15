@@ -61,21 +61,27 @@ if [ ${#tasks_annotations[@]} -eq 0 ]; then
 fi
 
 tasks_annotations_add='  ...add annotation'
+tasks_annotations_edit='  ...edit annotation'
 tasks_annotations_delete='  ...delete annotation'
+tasks_annotations_actions=("")
 
 if [ ${#tasks[@]} -eq 1 ]; then
 	tasks_description="$(echo $tasks | jq -r '.description')"
-	tasks_annotations+=("$tasks_annotations_add")
+	tasks_annotations_actions+=("$tasks_annotations_add")
 fi
 
 while true; do
-	selected_annotation="$(echo "${tasks_annotations[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an annotation from task \033[4m$tasks_description\033[0m")")"
+	if [ -z "$selected_annotation" ]; then
+		selected_annotation="$(echo "${tasks_annotations[*]}" | sort -u | echo "$(cat -)${tasks_annotations_actions[*]}" | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an annotation from task \033[4m$tasks_description\033[0m")")"
+	fi
+
 	selected_annotation_input="$selected_annotation"
 
 	if [ "$selected_annotation" = "$tasks_annotations_add" ]; then
 		new_annotation="$(echo | fzf ${FZF_OPTS[@]} --print-query --header="$(echo "$tasks_annotations_add for task \033[4m$tasks_description\033[0m")" | tail -1)"
 
 		if [ -z "$new_annotation" ]; then
+			selected_annotation=""
 			continue
 		fi
 
@@ -127,12 +133,35 @@ while true; do
 		annotation_actions+=("$COPIER")
 	fi
 
+	annotation_actions+=("$tasks_annotations_edit")
 	annotation_actions+=("$tasks_annotations_delete")
 
 	selected_action="$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an action for \033[4m$selected_annotation\033[0m")")"
 
 	if [ -z "$selected_action" ]; then
+		selected_annotation=""
 		continue
+	elif [ "$selected_action" = "$tasks_annotations_edit" ]; then
+		new_annotation="$(echo | fzf ${FZF_OPTS[@]} --print-query --header="$(echo "$tasks_annotations_edit \033[4m$selected_annotation\033[0m for task \033[4m$tasks_description\033[0m")" | tail -1)"
+
+		if [ -z "$new_annotation" ] || [ "$new_annotation" = "$selected_annotation" ]; then
+			continue
+		fi
+
+		for task in "${tasks[@]}"; do
+			task_uuid="$(echo $task | jq -r '.uuid')"
+			task_annotations=($(echo $task | jq -r '.annotations.[]?.description'))
+
+			for task_annotation in "${task_annotations[@]}"; do
+				if [ "$task_annotation" = "$new_annotation" ]; then
+					continue 2
+				fi
+			done
+
+			task "uuid:$task_uuid" annotate "$new_annotation" > /dev/null 2>&1
+		done
+
+		selected_action="$tasks_annotations_delete"
 	fi
 
 	break
