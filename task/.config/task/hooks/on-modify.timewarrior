@@ -9,6 +9,12 @@
 read -r original_task
 read -r modified_task
 
+original_task=${original_task//\\\\n/\\n}
+modified_task=${modified_task//\\\\n/\\n}
+
+original_task=${original_task//\\n/\\\\n}
+modified_task=${modified_task//\\n/\\\\n}
+
 IFS=$'\n' # implode/explode by newline handle tags with spaces
 task_uuid=$(echo "$modified_task" | jq -r '.uuid')
 original_task_tags=($(echo "$original_task" | jq -r '.tags[]'))
@@ -49,6 +55,7 @@ if [ "$original_task_start" = "null" ] && [ "$modified_task_start" != "null" ]; 
 elif [ "$original_task_start" != "null" ] && ([ "$modified_task_start" = "null" ] || [ "$(echo "$modified_task" | jq -r '.end')" != "null" ]); then
 	# ensure start is removed when task is deleted in active state
 	modified_task="$(echo "$modified_task" | jq --compact-output 'del(.start)')"
+	modified_task=${modified_task//\\n/\\\\n}
 	modified_task_start="null"
 
 	if ! timew stop > /dev/null; then
