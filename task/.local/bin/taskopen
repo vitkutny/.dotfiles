@@ -26,6 +26,30 @@ else
 	)
 fi
 
+if [ -z "$OPENER" ]; then
+	if command -v open > /dev/null; then
+		OPENER=open
+	elif command -v xdg-open > /dev/null; then
+		OPENER=xdg-open
+	fi
+fi
+
+if [ -z "$VIEWER" ]; then
+	if command -v view > /dev/null; then
+		VIEWER="view --not-a-term -"
+	elif command -v less > /dev/null; then
+		VIEWER=less
+	fi
+fi
+
+if [ -z "$COPIER" ]; then
+	if command -v pbcopy > /dev/null; then
+		COPIER=pbcopy
+	elif command -v xclip > /dev/null; then
+		COPIER=xclip
+	fi
+fi
+
 task_description="$@"
 tasks=($(task $@ export | jq --compact-output '.[]'))
 
@@ -41,34 +65,46 @@ if [ ${#task_annotations[@]} -eq 0 ]; then
 	task_annotations+=("No annotation found for task")
 fi
 
-annotation_actions=()
-
-if ! [ -z "$OPENER" ]; then
-	annotation_actions+=("$OPENER")
-fi
-
-if ! [ -z "$VISUAL" ]; then
-	annotation_actions+=("$VISUAL")
-fi
-
-if ! [ -z "$EDITOR" ]; then
-	annotation_actions+=("$EDITOR")
-fi
-
-if ! [ -z "$VIEWER" ]; then
-	annotation_actions+=("$VIEWER")
-fi
-
-annotation_actions+=("denotate")
-
 while true; do
 	selected_annotation="$(echo "${task_annotations[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an annotation from task \033[4m$task_description\033[0m")")"
+	selected_annotation_input="$selected_annotation"
 
 	if [ -z "$selected_annotation" ] || [ "$task_annotations_empty" -eq 1 ]; then
 		exit 0
 	fi
 
-	selected_action=$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an action for \033[4m$selected_annotation\033[0m")")
+	annotation_actions=()
+
+	if [[ "$selected_annotation" == *"/"* ]]; then
+		# replace leading ~ with $HOME
+		selected_annotation_input="${selected_annotation_input/#\~/$HOME}"
+
+		if ! [ -z "$OPENER" ]; then
+			annotation_actions+=("$OPENER")
+		fi
+
+		if [ -f "$selected_annotation_input" ]; then
+			if ! [ -z "$VISUAL" ]; then
+				annotation_actions+=("$VISUAL")
+			fi
+
+			if ! [ -z "$EDITOR" ]; then
+				annotation_actions+=("$EDITOR")
+			fi
+		fi
+	fi
+
+	if ! [ -z "$VIEWER" ]; then
+		annotation_actions+=("$VIEWER")
+	fi
+
+	if ! [ -z "$COPIER" ]; then
+		annotation_actions+=("$COPIER")
+	fi
+
+	annotation_actions+=("denotate")
+
+	selected_action="$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an action for \033[4m$selected_annotation\033[0m")")"
 
 	if [ -z "$selected_action" ]; then
 		continue
@@ -79,7 +115,7 @@ done
 
 if [ "$selected_action" = "denotate" ]; then
 	for task in "${tasks[@]}"; do
-		task_uuid=$(echo $task | jq -r '.uuid')
+		task_uuid="$(echo $task | jq -r '.uuid')"
 		task_annotations=($(echo $task | jq -r '.annotations.[]?.description'))
 
 		for task_annotation in "${task_annotations[@]}"; do
@@ -92,9 +128,15 @@ if [ "$selected_action" = "denotate" ]; then
 	exit 0
 fi
 
-# replace leading ~ with $HOME
-selected_annotation="${selected_annotation/#\~/$HOME}"
-
 IFS=' '
-exec $selected_action "$selected_annotation"
+
+if [ "$selected_action" = "$VIEWER" ] || [ "$selected_action" = "$COPIER" ]; then
+	selected_annotation_input="$(mktemp)"
+	printf "$selected_annotation" > $selected_annotation_input
+	exec $selected_action < $selected_annotation_input
+	exit 1
+fi
+
+exec $selected_action "$selected_annotation_input"
+exit 1
 
