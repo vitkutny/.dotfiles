@@ -107,6 +107,7 @@ elif [ "$tasks_filter" = "all" ]; then
 	tasks_filter=""
 fi
 
+tasks_empty="  ...no tasks found"
 tasks_annotations_empty="  ...no annotation found for task"
 tasks_annotations_add='  ...add annotation'
 tasks_annotations_edit='  ...edit annotation'
@@ -123,11 +124,13 @@ tasks_annotations=()
 load_tasks_annotations() {
 	tasks_annotations=($(printf '%s' "${tasks[*]}" | jq '.annotations.[]?.description' | sort -u))
 
-	if [ ${#tasks_annotations[@]} -eq 0 ]; then
+	if [ ${#tasks[@]} -eq 0 ]; then
+		tasks_annotations+=("\"$tasks_empty\"")
+	elif [ ${#tasks_annotations[@]} -eq 0 ]; then
 		tasks_annotations+=("\"$tasks_annotations_empty\"")
 	fi
 
-	if [ ${#EDITORS} -gt 0 ]; then
+	if [ ${#tasks[@]} -gt 0 ] && [ ${#EDITORS} -gt 0 ]; then
 		tasks_annotations+=("\"$tasks_annotations_add\"")
 	fi
 }
@@ -143,7 +146,7 @@ while true; do
 		)"
 		selected_annotation_file=""
 
-		if [ -z "$selected_annotation" ] || [ "$selected_annotation" = "$tasks_annotations_empty" ]; then
+		if [ -z "$selected_annotation" ] || [ "$selected_annotation" = "$tasks_empty" ] || [ "$selected_annotation" = "$tasks_annotations_empty" ]; then
 			exit 0
 		elif [ "$selected_annotation" = "$tasks_annotations_add" ]; then
 			selected_annotation=""
