@@ -167,19 +167,29 @@ while true; do
 		printf '%s' "$selected_annotation" > $selected_annotation_file
 		selected_annotation_preview_file="$selected_annotation_file"
 		selected_annotation_preview_label="[ annotation.$selected_annotation_file_ext ]"
+		selected_annotation_linked_file=""
+		selected_annotation_linked_file_mime_type=""
+
+		if [ -r "${selected_annotation/#\~/$HOME}" ]; then
+			selected_annotation_linked_file="${selected_annotation/#\~/$HOME}"
+			selected_annotation_linked_file_mime_type="$(file -b --mime-type "$selected_annotation_linked_file")"
+
+			if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+				selected_annotation_preview_label="$selected_annotation"
+				selected_annotation_preview_file="$selected_annotation_linked_file"
+			fi
+		fi
 	fi
 
 	if [ -z "$selected_action" ]; then
 		annotation_actions=()
 
-		if [[ "$selected_annotation" == *"/"* ]]; then
-			if ! [ -z "$OPENER" ] && [[ "$selected_annotation" != *"$NEWLINE"* ]]; then
-				annotation_actions+=("$OPENER")
-			fi
+		if ! [ -z "$OPENER" ] && [[ "$selected_annotation" == *"/"* ]] && [[ "$selected_annotation" != *"$NEWLINE"* ]]; then
+			annotation_actions+=("$OPENER")
+		fi
 
-			if [ -w "${selected_annotation/#\~/$HOME}" ]; then
-				annotation_actions+=("${EDITORS[@]}")
-			fi
+		if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+			annotation_actions+=("${EDITORS[@]}")
 		fi
 
 		if ! [ -z "$VIEWER" ]; then
@@ -324,29 +334,35 @@ while true; do
 		selected_annotation=""
 		selected_action=""
 		continue
-	elif [ "$selected_action" = "$VIEWER" ]; then
+	elif [ "$selected_action" = "$OPENER" ]; then
 		unset IFS
-		if [ -r "${selected_annotation/#\~/$HOME}" ]; then
-			$selected_action "${selected_annotation/#\~/$HOME}"
+		if ! [ -z "$selected_annotation_linked_file" ]; then
+			$selected_action "$selected_annotation_linked_file"
 		else
-			$selected_action $selected_annotation_file
+			$selected_action "$selected_annotation"
 		fi
 		IFS=$NEWLINE
 		selected_action=""
 		continue
 	elif [ "$selected_action" = "$COPIER" ]; then
 		unset IFS
-		$selected_action < "$selected_annotation_file"
+		if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+			$selected_action < "$selected_annotation_linked_file"
+		else
+			$selected_action < "$selected_annotation_file"
+		fi
 		IFS=$NEWLINE
 		selected_action=""
 		continue
 	fi
 
+	# elif [ "$selected_action" = "$VIEWER" ]; then
+	# else [ "$selected_action" = "$EDITOR" ]:
 	unset IFS
-	if [ -r "${selected_annotation/#\~/$HOME}" ]; then
-		$selected_action "${selected_annotation/#\~/$HOME}"
+	if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+		$selected_action "$selected_annotation_linked_file"
 	else
-		$selected_action "$selected_annotation"
+		$selected_action "$selected_annotation_file"
 	fi
 	IFS=$NEWLINE
 	selected_action=""
