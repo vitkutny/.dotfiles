@@ -156,7 +156,7 @@ while true; do
 	if [ -z "$selected_annotation_file" ]; then
 		selected_annotation_file_ext="$(mime_type_ext "$(printf '%s' "$selected_annotation" | file -b --mime-type -)")"
 
-		if [ "$selected_annotation_file_ext" = "txt" ]; then
+		if [ -z "$selected_annotation_file_ext" ] || [ "$selected_annotation_file_ext" = "txt" ]; then
 			selected_annotation_file_ext="md"
 		fi
 
