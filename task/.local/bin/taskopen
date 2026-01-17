@@ -112,20 +112,13 @@ mktemp_ext () {
 	echo "$mktemp_file"
 }
 
-tasks_filter="$@"
-
-if [ -z "$tasks_filter" ]; then
-	tasks_filter="status:pending"
-elif [ "$tasks_filter" = "all" ]; then
-	tasks_filter=""
-fi
-
 tasks_empty="  ...no tasks found"
 tasks_annotations_empty="  ...no annotation found for task"
 tasks_annotations_add='  ...add annotation'
 tasks_annotations_edit='  ...edit annotation'
 tasks_annotations_delete='  ...delete annotation'
 
+tasks_filter="$@"
 tasks=()
 load_tasks() {
 	tasks=($(task $tasks_filter export | jq --compact-output '.[]'))
