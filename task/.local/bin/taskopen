@@ -1,36 +1,36 @@
-#!/usr/bin/env sh
-# simplified version of https://github.com/jschlatow/taskopen
+#!/usr/bin/env bash
 
 IFS=$'\n'
 FZF_OPTS=(
 	--layout=reverse
+	--style=full
+	--color=base16
+	--border
+	--border-label=" taskopen "
 )
-
-if [ -z "$FULLSCREEN" ]; then
-	FULLSCREEN=0
-
-	if [ "$(ps -p "$PPID" -o command | tail -n1)" = "taskwarrior-tui" ]; then
-		FULLSCREEN=1
+# Preview window sizing - specify size of finder list instead of preview window [https://github.com/junegunn/fzf/issues/3570]
+FZF_PREVIEW_TRANSFORMER_TOTAL_COUNT='
+	lines=$(( FZF_LINES - FZF_TOTAL_COUNT - 10 ))
+	if [ $lines -gt 0 ]; then
+		echo "change-preview-window:$lines"
+	else
+		echo "change-preview-window:hidden"
 	fi
-fi
-
-if [ "$FULLSCREEN" -eq 1 ]; then
-	FZF_OPTS+=(
-		--style=full
-		--border
-		--border-label=" taskopen "
-	)
-else
-	FZF_OPTS+=(
-		--height="~100%"
-	)
-fi
+'
 
 if [ -z "$OPENER" ]; then
 	if command -v open > /dev/null; then
 		OPENER=open
 	elif command -v xdg-open > /dev/null; then
 		OPENER=xdg-open
+	fi
+fi
+
+if [ -z "$PREVIEWER" ]; then
+	if command -v bat > /dev/null; then
+		PREVIEWER="bat --paging=never --theme=ansi --color=always --style=plain"
+	else
+		PREVIEWER=cat
 	fi
 fi
 
@@ -50,31 +50,48 @@ if [ -z "$COPIER" ]; then
 	fi
 fi
 
-tasks_description="$@"
-tasks=($(task $@ export | jq --compact-output '.[]' | sed 's/\\n/\\\\n/g'))
-tasks_annotations=($(echo "${tasks[*]}" | sed 's/\\n/\\\\n/g' | jq -r '.annotations.[]?.description' | sort -u))
-tasks_annotations_empty="  ...no annotation found for task"
+tasks_filter="$@"
 
-if [ ${#tasks_annotations[@]} -eq 0 ]; then
-	tasks_annotations+=("$tasks_annotations_empty")
+if [ -z "$tasks_filter" ]; then
+	tasks_filter="status:pending"
+elif [ "$tasks_filter" = "all" ]; then
+	tasks_filter=""
 fi
 
+tasks_annotations_empty="  ...no annotation found for task"
 tasks_annotations_add='  ...add annotation'
 tasks_annotations_edit='  ...edit annotation'
 tasks_annotations_delete='  ...delete annotation'
 
-if [ ${#tasks[@]} -eq 1 ]; then
-	tasks_description="$(echo $tasks | jq -r '.description')"
+tasks=()
+load_tasks() {
+	tasks=($(task $tasks_filter export | jq --compact-output '.[]'))
+}
+
+load_tasks
+
+tasks_annotations=()
+load_tasks_annotations() {
+	tasks_annotations=($(printf '%s' "${tasks[*]}" | jq '.annotations.[]?.description' | sort -u))
+
+	if [ ${#tasks_annotations[@]} -eq 0 ]; then
+		tasks_annotations+=("\"$tasks_annotations_empty\"")
+	fi
 
 	if ! [ -z "$VISUAL" ] || ! [ -z "$EDITOR" ]; then
-		tasks_annotations+=("$tasks_annotations_add")
+		tasks_annotations+=("\"$tasks_annotations_add\"")
 	fi
-fi
+}
+
+load_tasks_annotations
 
 while true; do
-	#TODO: fzf preview window of whole content – max height of row to show only matching part ?
 	if [ -z "$selected_annotation" ]; then
-		selected_annotation="$(echo "${tasks_annotations[*]//\\n/\\\\n}" | tr '\n' '\0' | sed 's/\\n/\n/g' | fzf --read0 ${FZF_OPTS[@]} --header="$(echo "Please select an annotation from task \033[4m$tasks_description\033[0m")")"
+		selected_annotation="$(printf '%s' "${tasks_annotations[*]}" | jq --raw-output0 | fzf ${FZF_OPTS[@]} \
+			--read0 \
+			--no-multi-line \
+			--header="Please select an annotation from task $tasks_filter" \
+		)"
 	fi
 
 	if [ -z "$selected_annotation" ] || [ "$selected_annotation" = "$tasks_annotations_empty" ]; then
@@ -82,7 +99,7 @@ while true; do
 	elif [ "$selected_annotation" = "$tasks_annotations_add" ]; then
 		selected_annotation_input=""
 	elif [ "$selected_annotation" != "$tasks_annotations_edit" ]; then
-		selected_annotation_input="${selected_annotation}"
+		selected_annotation_input="$selected_annotation"
 	fi
 
 	annotation_actions=()
@@ -105,6 +122,9 @@ while true; do
 			fi
 
 			if [ -f "$selected_annotation_input" ]; then
+				#TODO: we can do preview of this file
+				#TODO: check mime type: file -b --mime-type $filename
+				#TODO: if allowed (predefined list): text/*,application/json, maybe if terminal supports image, preview of image? https://github.com/junegunn/fzf/commit/d8188fce7b7bea982e7f9050c35e488e49fb8fd0
 				if ! [ -z "$VISUAL" ]; then
 					annotation_actions+=("$VISUAL")
 				fi
@@ -130,8 +150,21 @@ while true; do
 		annotation_actions+=("$tasks_annotations_delete")
 	fi
 
-	# TODO: fzf preview instead of selected_annotation in title?
-	selected_action="$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} --header="$(echo "Please select an action for \033[4m${selected_annotation//\\n/\\\\n}\033[0m")")"
+	selected_annotation_preview_file="$(mktemp)"
+	mv "$selected_annotation_preview_file" "$selected_annotation_preview_file.md"
+	selected_annotation_preview_file="$selected_annotation_preview_file.md"
+	echo "$selected_annotation" > "$selected_annotation_preview_file"
+	#TODO: view annotation action using preview file instead of stdin ?
+	#TODO: would provide information that its .md, and can be used for linked files too
+	#TODO: viewer would be simple `view` insteadof `view --not-a-term -`
+
+	selected_action="$(echo "${annotation_actions[*]}" | uniq | fzf ${FZF_OPTS[@]} \
+		--header="Please select an action for selected annotation from task $tasks_filter" \
+		--preview-window="down" \
+		--bind="result:transform:$FZF_PREVIEW_TRANSFORMER_TOTAL_COUNT" \
+		--bind="resize:transform:$FZF_PREVIEW_TRANSFORMER_TOTAL_COUNT" \
+		--preview="$PREVIEWER '$selected_annotation_preview_file'" \
+	)"
 
 	if [ -z "$selected_action" ]; then
 		if [ "$selected_annotation" = "$tasks_annotations_edit" ]; then
@@ -141,45 +174,68 @@ while true; do
 		fi
 		continue
 	elif [ "$selected_action" = "$tasks_annotations_edit" ]; then
+		# TODO: dont mix aaction into annotation ?
+		# TODO: support multiple editor, but if there is only 1, can be selected right away (as intention to edit is already present – its not like opening anotation if no other action is available)
 		selected_annotation="$selected_action"
 		continue
 	elif [ "$selected_annotation" = "$tasks_annotations_add" ] || [ "$selected_annotation" = "$tasks_annotations_edit" ]; then
 		selected_annotation_file="$(mktemp)"
 
 		if ! [ -z "$selected_annotation_input" ]; then
-			echo "$selected_annotation_input" >> $selected_annotation_file
+			printf '%s' "$selected_annotation_input" > $selected_annotation_file
 		fi
 
 		$selected_action "$selected_annotation_file"
 		new_annotation="$(cat "$selected_annotation_file")"
 
-		if [ -z "$new_annotation" ] || [ "$new_annotation" = "${selected_annotation_input}" ]; then
+		if [ -z "$new_annotation" ] || [ "$new_annotation" = "$selected_annotation_input" ]; then
 			continue
 		fi
 
-		# TODO: use JSON import instead of annotate/denotate to properly handle multiline annotations
-		# - task denotate does not accept newline – should be reported as bug in taskwarrior (`task 1 annotate "foo\nbar"` cannot be deleted by `task 1 denotate "foo\nbar"`)
-		# - using JSON will be better as it can be done in bulk for all modified $tasks and could preserve existing annotation time when annotation is edited (but dont know if keeping same old entry time is good, but it will be possible)
+		# - also properly escape when creating/editing – allow writing "\n" inside editor without \n beign replaced by newline
+		modified_tasks=()
+		load_tasks # reload before modify
+
 		for task in "${tasks[@]}"; do
-			task_uuid="$(echo $task | jq -r '.uuid')"
-			task_annotations=($(echo $task | sed 's/\\n/\\\\n/g' | jq -r '.annotations.[]?.description'))
+			task_annotations=($(printf '%s' "$task" | jq --compact-output '.annotations.[]?'))
 
-			for task_annotation in "${task_annotations[@]}"; do
-				if [ "$task_annotation" = "$new_annotation" ]; then
-					continue 2
+			if [ "$selected_annotation" = "$tasks_annotations_add" ]; then
+				for task_annotation in "${task_annotations[@]}"; do
+					task_annotation_description=$(printf '%s' "$task_annotation" | jq -r '.description')
+
+					if [ "$task_annotation_description" = "$new_annotation" ]; then
+						continue 2
+					fi
+				done
+
+				modified_tasks+=("$(printf '%s' "$task" | jq --compact-output --arg entry "$(date +"%Y%m%dT%H%M%SZ")" --arg description "$new_annotation" '.annotations += [{"entry":$entry,"description":$description}]')")
+			elif [ "$selected_annotation" = "$tasks_annotations_edit" ]; then
+				modified_task="$task"
+				for task_annotation in "${task_annotations[@]}"; do
+					task_annotation_entry=$(printf '%s' "$task_annotation" | jq -r '.entry')
+					task_annotation_description=$(printf '%s' "$task_annotation" | jq -r '.description')
+
+					if [ "$task_annotation_description" != "$(echo "$selected_annotation_input")" ]; then
+						continue
+					fi
+
+					modified_task="$(printf '%s' "$modified_task" | jq --compact-output --arg entry "$task_annotation_entry" --arg description "$new_annotation" '( .annotations[] | select(.entry == $entry) ).description = $description')"
+				done
+
+				if [ "$modified_task" != "$task" ]; then
+					modified_tasks+=("$modified_task")
 				fi
-			done
-
-			task "uuid:$task_uuid" annotate "$new_annotation" > /dev/null 2>&1
+			fi
 		done
 
-		if [ "$selected_annotation" = "$tasks_annotations_add" ]; then
-			exec $0 $@
-			exit 1
+		if [ ${#modified_tasks[@]} -gt 0 ]; then
+			#TODO: log file instead of /dev/null
+			printf '%s' "${modified_tasks[*]}" | task import > /dev/null 2>&1
+			modified_tasks=()
 		fi
 
-		selected_action="$tasks_annotations_delete"
-		selected_annotation="$selected_annotation_input"
+		exec $0 $@
+		exit 1
 	fi
 
 	break
@@ -187,15 +243,29 @@ done
 
 if [ "$selected_action" = "$tasks_annotations_delete" ]; then
 	for task in "${tasks[@]}"; do
-		task_uuid="$(echo $task | jq -r '.uuid')"
-		task_annotations=($(echo $task | jq -r '.annotations.[]?.description'))
-
+		modified_task="$task"
+		task_annotations=($(printf '%s' "$task" | jq --compact-output '.annotations.[]?'))
 		for task_annotation in "${task_annotations[@]}"; do
-			if [ "$task_annotation" = "$selected_annotation" ]; then
-				task rc.context=off "uuid:$task_uuid" denotate "$selected_annotation" > /dev/null 2>&1
+			task_annotation_entry=$(printf '%s' "$task_annotation" | jq -r '.entry')
+			task_annotation_description=$(printf '%s' "$task_annotation" | jq -r '.description')
+
+			if [ "$task_annotation_description" != "$selected_annotation_input" ]; then
+				continue
 			fi
+
+			modified_task="$(printf '%s' "$modified_task" | jq --compact-output --arg entry "$task_annotation_entry" 'del(.annotations[] | select(.entry == $entry))')"
 		done
+
+		if [ "$modified_task" != "$task" ]; then
+			modified_tasks+=("$modified_task")
+		fi
 	done
+
+	if [ ${#modified_tasks[@]} -gt 0 ]; then
+		#TODO: log file instead of /dev/null
+		printf '%s' "${modified_tasks[*]}" | task import > /dev/null 2>&1
+		modified_tasks=()
+	fi
 
 	exec $0 $@
 	exit 1
