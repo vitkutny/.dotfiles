@@ -7,7 +7,7 @@ FZF_OPTS=(
 	--style=full
 	--color=base16
 	--border
-	--border-label=" taskopen "
+	--border-label="[ taskopen ]"
 )
 # Preview window sizing - specify size of finder list instead of preview window [https://github.com/junegunn/fzf/issues/3570]
 FZF_PREVIEW_TRANSFORMER_TOTAL_COUNT='
@@ -163,7 +163,7 @@ while true; do
 		selected_annotation_file="$(mktemp_ext "$selected_annotation_file_ext")"
 		printf '%s' "$selected_annotation" > $selected_annotation_file
 		selected_annotation_preview_file="$selected_annotation_file"
-		selected_annotation_preview_label="annotation.$selected_annotation_file_ext"
+		selected_annotation_preview_label="[ annotation.$selected_annotation_file_ext ]"
 	fi
 
 	if [ -z "$selected_action" ]; then
