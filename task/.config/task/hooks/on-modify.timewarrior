@@ -9,36 +9,30 @@
 read -r original_task
 read -r modified_task
 
-original_task=${original_task//\\\\n/\\n}
-modified_task=${modified_task//\\\\n/\\n}
-
-original_task=${original_task//\\n/\\\\n}
-modified_task=${modified_task//\\n/\\\\n}
-
 IFS=$'\n' # implode/explode by newline handle tags with spaces
-task_uuid=$(echo "$modified_task" | jq -r '.uuid')
-original_task_tags=($(echo "$original_task" | jq -r '.tags[]'))
-modified_task_tags=($(echo "$modified_task" | jq -r '.tags[]'))
+task_uuid=$(printf '%s' "$modified_task" | jq -r '.uuid')
+original_task_tags=($(printf '%s' "$original_task" | jq -r '.tags[]'))
+modified_task_tags=($(printf '%s' "$modified_task" | jq -r '.tags[]'))
 
 # add task uuid to tags
 original_task_tags+=("_TASK[$task_uuid]")
 modified_task_tags+=("_TASK[$task_uuid]")
 
 # add task project to tags
-original_task_project=$(echo "$original_task" | jq -r '.project')
+original_task_project=$(printf '%s' "$original_task" | jq -r '.project')
 if [ "$original_task_project" != "null" ]; then
 	original_task_tags+=("_PROJECT[$original_task_project]")
 fi
 
-modified_task_project=$(echo "$modified_task" | jq -r '.project')
+modified_task_project=$(printf '%s' "$modified_task" | jq -r '.project')
 if [ "$modified_task_project" != "null" ]; then
 	modified_task_tags+=("_PROJECT[$modified_task_project]")
 fi
 
 
 # inspired by /opt/homebrew/share/doc/timew/ext/on-modify.timewarrior
-original_task_start=$(echo "$original_task" | jq -r '.start')
-modified_task_start=$(echo "$modified_task" | jq -r '.start')
+original_task_start=$(printf '%s' "$original_task" | jq -r '.start')
+modified_task_start=$(printf '%s' "$modified_task" | jq -r '.start')
 task_started=0
 
 # task started
@@ -52,10 +46,9 @@ if [ "$original_task_start" = "null" ] && [ "$modified_task_start" != "null" ]; 
 
 	timew start ${modified_task_tags[@]} > /dev/null
 # task stopped
-elif [ "$original_task_start" != "null" ] && ([ "$modified_task_start" = "null" ] || [ "$(echo "$modified_task" | jq -r '.end')" != "null" ]); then
+elif [ "$original_task_start" != "null" ] && ([ "$modified_task_start" = "null" ] || [ "$(printf '%s' "$modified_task" | jq -r '.end')" != "null" ]); then
 	# ensure start is removed when task is deleted in active state
-	modified_task="$(echo "$modified_task" | jq --compact-output 'del(.start)')"
-	modified_task=${modified_task//\\n/\\\\n}
+	modified_task="$(printf '%s' "$modified_task" | jq --compact-output 'del(.start)')"
 	modified_task_start="null"
 
 	if ! timew stop > /dev/null; then
@@ -73,12 +66,12 @@ if [[ "${original_task_tags[@]}" != "${modified_task_tags[@]}" ]]; then
 fi
 
 # timew annotate using task description
-if [ "$(echo "$original_task" | jq -r '.description')" != "$(echo "$modified_task" | jq -r '.description')" ]; then
+if [ "$(printf '%s' "$original_task" | jq -r '.description')" != "$(printf '%s' "$modified_task" | jq -r '.description')" ]; then
 	timew_ids=$(timew export :all _TASK\["$task_uuid"\] | jq -r 'map("@\(.id)").[]')
-	timew annotate $timew_ids "$(echo "$modified_task" | jq -r '.description')" > /dev/null
+	timew annotate $timew_ids "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
 elif [ "$task_started" -eq 1 ]; then
-	timew annotate @1 "$(echo "$modified_task" | jq -r '.description')" > /dev/null
+	timew annotate @1 "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
 fi
 
-echo $modified_task
+printf '%s' $modified_task
 
