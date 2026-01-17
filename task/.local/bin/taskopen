@@ -81,12 +81,25 @@ elif [ -r "/private/etc/apache2/mime.types" ]; then
 	MIME_TYPES="/etc/mime.types"
 fi
 
-mime_type_ext () {
+mime_type_get_ext () {
 	if [ -z "$MIME_TYPES" ] || [ "$#" != 1 ]; then
-		return
+		return 1
 	fi
 
 	grep "^$1"$'\t' $MIME_TYPES | awk -F '\t+' '{print $2}' | cut -d ' ' -f 1
+}
+mime_type_is_text () {
+	if [ "$#" != 1 ]; then
+		return 1
+	elif printf '%s' "$1" | grep -q \
+				-e '^text/' \
+				-e '^application/json' \
+				-e '^application/xml' \
+    ; then
+		return 0
+	fi
+
+	return 1
 }
 mktemp_ext () {
 	mktemp_file="$(mktemp)"
@@ -157,7 +170,7 @@ while true; do
 	fi
 
 	if [ -z "$selected_annotation_file" ]; then
-		selected_annotation_file_ext="$(mime_type_ext "$(printf '%s' "$selected_annotation" | file -b --mime-type -)")"
+		selected_annotation_file_ext="$(mime_type_get_ext "$(printf '%s' "$selected_annotation" | file -b --mime-type -)")"
 
 		if [ -z "$selected_annotation_file_ext" ] || [ "$selected_annotation_file_ext" = "txt" ]; then
 			selected_annotation_file_ext="md"
@@ -170,11 +183,12 @@ while true; do
 		selected_annotation_linked_file=""
 		selected_annotation_linked_file_mime_type=""
 
+		# replace leading ~ with $HOME for linked file
 		if [ -r "${selected_annotation/#\~/$HOME}" ]; then
 			selected_annotation_linked_file="${selected_annotation/#\~/$HOME}"
 			selected_annotation_linked_file_mime_type="$(file -b --mime-type "$selected_annotation_linked_file")"
 
-			if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+			if mime_type_is_text "$selected_annotation_linked_file_mime_type"; then
 				selected_annotation_preview_label="$selected_annotation"
 				selected_annotation_preview_file="$selected_annotation_linked_file"
 			fi
@@ -188,7 +202,7 @@ while true; do
 			annotation_actions+=("$OPENER")
 		fi
 
-		if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+		if mime_type_is_text "$selected_annotation_linked_file_mime_type"; then
 			annotation_actions+=("${EDITORS[@]}")
 		fi
 
@@ -346,7 +360,7 @@ while true; do
 		continue
 	elif [ "$selected_action" = "$COPIER" ]; then
 		unset IFS
-		if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+		if mime_type_is_text "$selected_annotation_linked_file_mime_type"; then
 			$selected_action < "$selected_annotation_linked_file"
 		else
 			$selected_action < "$selected_annotation_file"
@@ -359,7 +373,7 @@ while true; do
 	# elif [ "$selected_action" = "$VIEWER" ]; then
 	# else [ "$selected_action" = "$EDITOR" ]:
 	unset IFS
-	if printf '%s' "$selected_annotation_linked_file_mime_type" | grep -q '^text/'; then
+	if mime_type_is_text "$selected_annotation_linked_file_mime_type"; then
 		$selected_action "$selected_annotation_linked_file"
 	else
 		$selected_action "$selected_annotation_file"
