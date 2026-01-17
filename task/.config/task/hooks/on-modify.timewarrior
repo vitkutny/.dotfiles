@@ -11,8 +11,8 @@ read -r modified_task
 
 IFS=$'\n' # implode/explode by newline handle tags with spaces
 task_uuid=$(printf '%s' "$modified_task" | jq -r '.uuid')
-original_task_tags=($(printf '%s' "$original_task" | jq -r '.tags[]'))
-modified_task_tags=($(printf '%s' "$modified_task" | jq -r '.tags[]'))
+original_task_tags=($(printf '%s' "$original_task" | jq -r '.tags[]?'))
+modified_task_tags=($(printf '%s' "$modified_task" | jq -r '.tags[]?'))
 
 # add task uuid to tags
 original_task_tags+=("_TASK[$task_uuid]")
