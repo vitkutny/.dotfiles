@@ -13,8 +13,7 @@ do
 done
 
 if (($n > 0)); then
-	date >> /tmp/task-sync.log
-	task sync >> /tmp/task-sync.log
+	task sync > /dev/null
 fi
 
 exit 0
