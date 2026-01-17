@@ -277,13 +277,13 @@ while true; do
 			modified_tasks=()
 			# reload after import
 			load_tasks
-			load_tasks_annotations
 			selected_annotation="$new_annotation"
 			selected_annotation_file=
 		else
 			selected_annotation=""
 		fi
 
+		load_tasks_annotations
 		selected_action=""
 		continue
 	elif [ "$selected_action" = "$tasks_annotations_delete" ]; then
@@ -315,9 +315,9 @@ while true; do
 			modified_tasks=()
 			# reload after import
 			load_tasks
-			load_tasks_annotations
 		fi
 
+		load_tasks_annotations
 		selected_annotation=""
 		selected_action=""
 		continue
