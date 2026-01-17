@@ -1,5 +1,7 @@
 tap "rhettbull/osxphotos"
 tap "vcmi/vcmi"
+# Clone of cat(1) with syntax highlighting and Git integration
+brew "bat"
 # GNU File, Shell, and Text utilities
 brew "coreutils"
 # Perl lib for reading and writing EXIF metadata
