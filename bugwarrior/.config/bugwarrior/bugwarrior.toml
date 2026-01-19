@@ -1,0 +1,27 @@
+# https://bugwarrior.readthedocs.io/en/stable/common_configuration.html
+[general]
+taskrc = "~/.config/task/taskrc.bugwarrior"
+
+inline_links = false
+annotation_links = true
+
+replace_tags = true
+static_tags = [
+	"next",
+]
+
+targets = [
+	"github_vitkutny",
+]
+
+# https://bugwarrior.readthedocs.io/en/stable/services/github.html
+[github_vitkutny]
+service = "github"
+login = "vitkutny"
+token = "@oracle:use_keyring"
+username = "vitkutny"
+project_owner_prefix = true
+add_tags = [
+	"work",
+	"work_vitkutny",
+]

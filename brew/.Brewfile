@@ -1,4 +1,3 @@
-tap "rhettbull/osxphotos"
 tap "vcmi/vcmi"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
@@ -38,10 +37,10 @@ brew "taskwarrior-tui"
 brew "timewarrior"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
+# Extremely fast Python package installer and resolver, written in Rust
+brew "uv"
 # Executes a program periodically, showing output fullscreen
 brew "watch"
-# Export photos from Apple Photos app and query the Photos database
-brew "rhettbull/osxphotos/osxphotos"
 # Enable Windows-like alt-tab
 cask "alt-tab"
 # Display management tool
@@ -74,7 +73,7 @@ cask "steam"
 # Free and open-source OpenVPN client
 cask "tunnelblick"
 # Open-source engine for Heroes of Might & Magic III
-cask "vcmi"
+cask "vcmi/vcmi/vcmi"
 # REST, GraphQL and gRPC client
 cask "yaak"
 mas "Actions", id: 1586435171
@@ -82,6 +81,7 @@ mas "Baking Soda", id: 1601151613
 mas "Blackmagic Disk Speed Test", id: 425264550
 mas "Mic Drop", id: 1489816366
 mas "Numbers", id: 409203825
+mas "Pages", id: 409201541
 mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
 mas "Vinegar", id: 1591303229
