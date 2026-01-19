@@ -21,6 +21,7 @@ login = "vitkutny"
 token = "@oracle:use_keyring"
 username = "vitkutny"
 project_owner_prefix = true
+default_priority = ""
 add_tags = [
 	"work",
 	"work_vitkutny",
