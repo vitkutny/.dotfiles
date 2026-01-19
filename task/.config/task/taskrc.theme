@@ -1,0 +1,7 @@
+# see /opt/homebrew/share/doc/task/rc/*.theme
+include dark-16.theme
+
+# Priority
+color.uda.priority.H=
+color.uda.priority.M=
+color.uda.priority.L=
