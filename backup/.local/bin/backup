@@ -40,6 +40,9 @@ if nc -z homeserver.local 22; then
 		~/Documents/Backup/homeserver/homeserver.zip
 fi
 
+# task sync / backup
+task synchronize
+
 if screen_is_locked 2> /dev/null; then
 	echo "screen is locked"
 	date | tee -a "$RUN_FILE"
