@@ -62,11 +62,9 @@ autoload -U edit-command-line
 zle -N edit-command-line
 bindkey '\C-x\C-e' edit-command-line
 
-# before compinit
-fpath=(
-    ~/.local/share/zsh/site-functions
-    $fpath
-)
+# setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
+bindkey -e
+
 # https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh
 autoload -Uz compinit
 compinit

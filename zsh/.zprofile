@@ -8,6 +8,11 @@ export PATH="$PATH:/Users/vitkutny/Library/Application Support/JetBrains/Toolbox
 # https://docs.brew.sh/Manpage#shellenv-shell-
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+fpath=(
+    ~/.local/share/zsh/site-functions
+    $fpath
+)
+
 # ~/.local/bin – on last position – overriding of system binaries not allowed
 export PATH="$PATH:$HOME/.local/bin"
 
@@ -17,7 +22,3 @@ export GPG_TTY=$(tty)
 # default commands
 export EDITOR=vim
 export VISUAL=vim
-
-# setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
-bindkey -e
-
