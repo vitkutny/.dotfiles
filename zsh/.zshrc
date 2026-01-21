@@ -82,3 +82,20 @@ alias to='taskopen'
 alias tt='taskwarrior-tui'
 alias tw='timew'
 
+preexec_task_sync () {
+	local command="$(echo "$2" | cut -d' ' -f1)"
+	local command_argument="$(echo "$2" | cut -d' ' -f1 -f2)"
+
+	if printf '%s' "$command" | grep -Fx -q \
+		-e 'task' \
+		-e 'taskwarrior-tui' \
+		-e 'taskopen' \
+	; then
+		unset -f preexec_task_sync
+
+		if [ "$command_argument" != "task sync" ]; then
+			task sync
+		fi
+	fi
+}
+add-zsh-hook preexec preexec_task_sync
