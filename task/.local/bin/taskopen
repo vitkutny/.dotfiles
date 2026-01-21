@@ -246,7 +246,7 @@ while true; do
 		unset IFS
 		$selected_editor "$selected_annotation_file"
 		IFS=$NEWLINE
-		new_annotation="$(cat "$selected_annotation_file")"
+		new_annotation="$(<"$selected_annotation_file")"
 
 		if [ "$new_annotation" = "$selected_annotation" ]; then
 			selected_action=""
