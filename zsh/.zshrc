@@ -48,6 +48,9 @@ if [ "$(prompt -c | tr -d "\n" | tr -s ' ')" = "Current prompt theme is: pure" ]
 	PROMPT='%F{$prompt_pipestatus_color}[$prompt_pipestatus]%f '$PROMPT
 fi
 
+# setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
+bindkey -e
+
 # https://coderwall.com/p/jpj_6q/zsh-better-history-searching-with-arrow-keys
 autoload -U up-line-or-beginning-search
 autoload -U down-line-or-beginning-search
@@ -61,9 +64,6 @@ bindkey "^[[B" down-line-or-beginning-search # Down
 autoload -U edit-command-line
 zle -N edit-command-line
 bindkey '\C-x\C-e' edit-command-line
-
-# setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
-bindkey -e
 
 # https://docs.brew.sh/Shell-Completion#configuring-completions-in-zsh
 autoload -Uz compinit
