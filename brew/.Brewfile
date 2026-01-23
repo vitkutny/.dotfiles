@@ -17,12 +17,12 @@ brew "mas"
 brew "miller"
 # Simple tool to make locally trusted development certificates
 brew "mkcert"
+# Prompt theme engine for any shell
+brew "oh-my-posh"
 # Shell command parallelization utility
 brew "parallel"
 # Pinentry for GPG on Mac
 brew "pinentry-mac"
-# Pretty, minimal and fast ZSH prompt
-brew "pure"
 # SMART hard drive monitoring
 brew "smartmontools"
 # Organize software neatly under a single directory tree (e.g. /usr/local)

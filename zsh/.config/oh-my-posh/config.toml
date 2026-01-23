@@ -1,0 +1,66 @@
+version = 4
+final_space = true
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+newline = true
+
+[[blocks.segments]]
+type = 'status'
+template = '[{{ .String }}]'
+foreground_templates = [ '{{ if .Error }}red{{ else }}green{{ end }}' ]
+
+[blocks.segments.options]
+always_enabled = true
+
+[[blocks.segments]]
+type = 'time'
+foreground = 'yellow'
+template = ' ⏰ {{ .CurrentDate | date .Format }}'
+
+[[blocks.segments]]
+type = 'executiontime'
+foreground = 'yellow'
+template = ' [{{ .FormattedMs }}]'
+
+[[blocks.segments]]
+type = 'text'
+template = '{{ if .Env.POSH_TASK_PROMPT }} 💻 {{ .Env.POSH_TASK_PROMPT }}{{ end }}'
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+newline = true
+
+[[blocks.segments]]
+type = 'path'
+foreground = 'default'
+template = '{{ .Path }}'
+
+[blocks.segments.options]
+style = 'full'
+
+[[blocks.segments]]
+type = 'git'
+foreground = 'darkGray'
+template = ' {{ .HEAD }}{{ if or (.Working.Changed) (.Staging.Changed) }}*{{ end }} <cyan>{{ if gt .Behind 0 }}⇣{{ end }}{{ if gt .Ahead 0 }}⇡{{ end }}</>'
+
+[blocks.segments.options]
+branch_icon = ''
+commit_icon = '@'
+fetch_status = true
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+newline = true
+
+[[blocks.segments]]
+type = 'text'
+foreground = 'darkGray'
+template = '❯'
+
+[secondary_prompt]
+foreground = 'darkGray'
+template = '❯❯ '

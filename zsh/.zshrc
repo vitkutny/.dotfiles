@@ -1,52 +1,7 @@
-# https://github.com/sindresorhus/pure
-autoload -U promptinit; promptinit
-prompt pure > /dev/null
-
-if [ "$(prompt -c | tr -d "\n" | tr -s ' ')" = "Current prompt theme is: pure" ]; then
-	zstyle :prompt:pure:path color default
-	zstyle ':prompt:pure:prompt:*' color default
-	#zstyle :prompt:pure:prompt:error color red
-	#zstyle :prompt:pure:prompt:success color green
-
-	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#disable-pure-terminal-title-updates
-	prompt_pure_set_title() {}
-
-	# custom prompt on newline
-	PROMPT='$prompt_newline'$PROMPT
-
-	# TaskWarrior prompt
-	prompt_taskwarrior=''
-	precmd_prompt_taskwarrior() {
-		prompt_taskwarrior="$(task rc.context=none rc.verbose=off rc._forcecolor=on prompt 2>/dev/null | xargs)"
-
-		if ! [ -z "$prompt_taskwarrior" ]; then
-			prompt_taskwarrior="💻 $prompt_taskwarrior"
-		fi
-	}
-	add-zsh-hook precmd precmd_prompt_taskwarrior
-	PROMPT='$prompt_taskwarrior '$PROMPT
-
-	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#show-system-time-in-prompt
-	PROMPT='⏰ %F{$prompt_pure_colors[execution_time]}%*%f '$PROMPT
-
-	# https://github.com/sindresorhus/pure/wiki/Customizations,-hacks-and-tweaks#show-exit-code-of-all-piped-commands-in-rprompt
-	prompt_pipestatus='0'
-	prompt_pipestatus_color=green
-	precmd_prompt_pipestatus() {
-		local exitcodes=(${pipestatus[@]})
-		prompt_pipestatus="${(j.|.)exitcodes}"
-		prompt_pipestatus_color=green
-
-		for exitcode in ${exitcodes[@]}; do
-			if ! [[ $exitcode -eq 0 ]]; then
-				prompt_pipestatus_color=red
-			fi
-		done
-	}
-
-	add-zsh-hook precmd precmd_prompt_pipestatus
-	PROMPT='%F{$prompt_pipestatus_color}[$prompt_pipestatus]%f '$PROMPT
-fi
+eval "$(oh-my-posh init zsh  --config ~/.config/oh-my-posh/config.toml)"
+function set_poshcontext() {
+	export POSH_TASK_PROMPT="$(task rc.context=none rc.verbose=off rc._forcecolor=on prompt 2>/dev/null | xargs)"
+}
 
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
 bindkey -e
