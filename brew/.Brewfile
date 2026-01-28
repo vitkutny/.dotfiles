@@ -17,6 +17,8 @@ brew "mas"
 brew "miller"
 # Simple tool to make locally trusted development certificates
 brew "mkcert"
+# Modern shell for the GitHub era
+brew "nushell"
 # Prompt theme engine for any shell
 brew "oh-my-posh"
 # Shell command parallelization utility
@@ -81,9 +83,7 @@ mas "Baking Soda", id: 1601151613
 mas "Blackmagic Disk Speed Test", id: 425264550
 mas "Mic Drop", id: 1489816366
 mas "Numbers", id: 409203825
-mas "Pages", id: 409201541
 mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
 mas "Vinegar", id: 1591303229
 mas "Wipr", id: 1662217862
-mas "Xcode", id: 497799835

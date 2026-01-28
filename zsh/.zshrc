@@ -30,12 +30,37 @@ source ~/.dotfiles/zsh/submodules/fzf-tab/fzf-tab.plugin.zsh
 # https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration
 FZF_ALT_C_COMMAND= source <(fzf --zsh)
 
+# https://www.nushell.sh/commands/docs/detect.html
+function detect () {
+	nu -c "cat - | detect $*" </dev/stdin
+}
+# https://www.nushell.sh/commands/docs/format.html
+function format () {
+	nu -c "cat - | format $*" </dev/stdin
+}
+# https://www.nushell.sh/commands/docs/from.html
+function from () {
+	nu -c "cat - | from $*" </dev/stdin
+}
+# https://www.nushell.sh/commands/docs/to.html
+function to () {
+	# convert string table to TSV – remove "|" below header and around table from all sides, remaining "|" replaced with \t
+	# tsv converted to table inside nu, rejected # column and converted to desired format
+	sed -e '1d;3d;$d' -e 's/^.//' -e 's/.$//' < /dev/stdin | tr '│' '\t' | nu -c "cat - | from tsv --trim all | reject '#' | to $*"
+}
+
 # aliases
 alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cli'
 alias t='task'
-alias to='taskopen'
 alias tt='taskwarrior-tui'
 alias tw='timew'
+alias tws='timew summary'
+function tws_table () {
+	sed '1d;3d' < /dev/stdin | detect columns --guess
+}
+function tws_csv () {
+	tws_table | to csv
+}
 
 preexec_task_sync () {
 	local command="$(echo "$2" | cut -d' ' -f1)"
