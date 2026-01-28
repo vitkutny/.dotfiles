@@ -34,19 +34,31 @@ FZF_ALT_C_COMMAND= source <(fzf --zsh)
 function detect () {
 	nu -c "cat - | detect $*" </dev/stdin
 }
-# https://www.nushell.sh/commands/docs/format.html
-function format () {
-	nu -c "cat - | format $*" </dev/stdin
-}
 # https://www.nushell.sh/commands/docs/from.html
 function from () {
 	nu -c "cat - | from $*" </dev/stdin
 }
-# https://www.nushell.sh/commands/docs/to.html
-function to () {
+function from_table () {
 	# convert string table to TSV – remove "|" below header and around table from all sides, remaining "|" replaced with \t
 	# tsv converted to table inside nu, rejected # column and converted to desired format
-	sed -e '1d;3d;$d' -e 's/^.//' -e 's/.$//' < /dev/stdin | tr '│' '\t' | nu -c "cat - | from tsv --trim all | reject '#' | to $*"
+	sed -e '1d;3d;$d' -e 's/^.//' -e 's/.$//' < /dev/stdin | tr '│' '\t' | nu -c "cat - | from tsv --trim all | reject '#' $*"
+}
+
+function nowrap () {
+	local tput_cols="$(tput cols)"
+	# stty: stdin isn't a terminal 2>/dev/null
+	stty cols 65535 2>/dev/null # max zsh $COLUMNS size
+	$*
+	stty cols "$tput_cols" 2>/dev/null
+}
+
+function timew () {
+	if [ -t 1 ]; then # stdout to terminal
+		command timew $*
+	else # output used for processing
+		# override getTerminalWidth for consistent summary https://github.com/GothenburgBitFactory/timewarrior/blob/8cda469a52b270ef3593b27180547f8f7d1ec8ad/src/helper.cpp#L518
+		nowrap command timew $*
+	fi
 }
 
 # aliases
@@ -56,10 +68,10 @@ alias tt='taskwarrior-tui'
 alias tw='timew'
 alias tws='timew summary'
 function tws_table () {
-	sed '1d;3d' < /dev/stdin | detect columns --guess
+	sed '1d;3d' < /dev/stdin | detect columns --guess $*
 }
 function tws_csv () {
-	tws_table | to csv
+	tws_table $* '| to csv'
 }
 
 preexec_task_sync () {
