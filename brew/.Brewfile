@@ -87,3 +87,4 @@ mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
 mas "Vinegar", id: 1591303229
 mas "Wipr", id: 1662217862
+mas "Xcode", id: 497799835

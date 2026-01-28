@@ -16,6 +16,7 @@ mkdir -p "$LOG_DIRECTORY"
 RUN_FILE="$LOG_DIRECTORY/backup-run.log"
 TM_VOLUME_NAME=TimeMachine
 PHOTOS_VOLUME_NAME=OSXPhotos
+VIDEOS_VOLUME_NAME=Videos
 
 date | tee -a "$RUN_FILE"
 
@@ -25,8 +26,10 @@ if screen_is_locked 2> /dev/null; then
 	exit 0
 fi
 
-# brew configuration
+# PATH configuration
 eval "$(/opt/homebrew/bin/brew shellenv)"
+export PATH="$PATH:$HOME/.local/bin"
+
 # Brewfile backup
 brew bundle dump --describe --global --force
 
@@ -50,7 +53,13 @@ UNMOUNT_PHOTOS=0
 
 if ! [ -d "/Volumes/$PHOTOS_VOLUME_NAME" ] && diskutil mount "$PHOTOS_VOLUME_NAME"; then
 	UNMOUNT_PHOTOS=1
+
 	date
+	#OSError: [Errno 24] Too many open files: '/var/folders/d8/t3bhtgy92xxb0flscfdd4bvm0000gn/T/osxphotos_export_gw0n61vu'
+	#was ok before migrating to "uv" – probably related to https://github.com/astral-sh/uv/issues/17512
+	ulimit_default="$(ulimit  -n)" # default 256
+	ulimit -n unlimited
+	mkdir -p /Volumes/"$PHOTOS_VOLUME_NAME"/export
 	osxphotos export /Volumes/"$PHOTOS_VOLUME_NAME"/export \
 		--library ~/Pictures/Photos\ Library.photoslibrary \
 		--export-by-date \
@@ -58,7 +67,14 @@ if ! [ -d "/Volumes/$PHOTOS_VOLUME_NAME" ] && diskutil mount "$PHOTOS_VOLUME_NAM
 		--cleanup \
 		--report "$LOG_DIRECTORY/osxphotos.csv" \
 	;
+	ulimit -n "$ulimit_default"
 	date
+fi
+
+UNMOUNT_VIDEOS=0
+
+if ! [ -d "/Volumes/$VIDEOS_VOLUME_NAME" ] && diskutil mount "$VIDEOS_VOLUME_NAME"; then
+	UNMOUNT_VIDEOS=1
 fi
 
 UNMOUNT_TM=0
@@ -74,14 +90,14 @@ fi
 
 DISK_EJECT=0
 
-if [ $UNMOUNT_PHOTOS -eq 1 ] && [ $UNMOUNT_TM -eq 1 ] && ! [ -d "/Volumes/CrossOver" ] && ! [ -d "/Volumes/Steam" ]; then
+if [ $UNMOUNT_PHOTOS -eq 1 ] && [ $UNMOUNT_VIDEOS -eq 1 ] && [ $UNMOUNT_TM -eq 1 ] && ! [ -d "/Volumes/CrossOver" ] && ! [ -d "/Volumes/Steam" ]; then
 	DISK_EJECT=1
 fi
 
 
 # unmount when finished
 for i in {1..3}; do
-	if [ $UNMOUNT_PHOTOS -eq 0 ] && [ $UNMOUNT_TM -eq 0 ]; then
+	if [ $UNMOUNT_PHOTOS -eq 0 ] && [ $UNMOUNT_VIDEOS -eq 0 ] && [ $UNMOUNT_TM -eq 0 ]; then
 		break
 	fi
 
@@ -89,6 +105,10 @@ for i in {1..3}; do
 
 	if [ $UNMOUNT_PHOTOS -eq 1 ] && diskutil unmount "$PHOTOS_VOLUME_NAME"; then
 		UNMOUNT_PHOTOS=0
+	fi
+
+	if [ $UNMOUNT_VIDEOS -eq 1 ] && diskutil unmount "$VIDEOS_VOLUME_NAME"; then
+		UNMOUNT_VIDEOS=0
 	fi
 
 	if [ $UNMOUNT_TM -eq 1 ] && diskutil unmount "$TM_VOLUME_NAME"; then
@@ -101,7 +121,7 @@ if [ $DISK_EJECT -eq 1 ]; then
 	sleep 10
 
 	# check again if no volume was mounted after setting DISK_EJECT=1
-	if ! [ -d "/Volumes/$TM_VOLUME_NAME" ] && ! [ -d "/Volumes/$PHOTOS_VOLUME_NAME" ] && ! [ -d "/Volumes/CrossOver" ] && ! [ -d "/Volumes/Steam" ]; then
+	if ! [ -d "/Volumes/$TM_VOLUME_NAME" ] && ! [ -d "/Volumes/$PHOTOS_VOLUME_NAME" ] && ! [ -d "/Volumes/$VIDEOS_VOLUME_NAME" ] && ! [ -d "/Volumes/CrossOver" ] && ! [ -d "/Volumes/Steam" ]; then
 		diskutil eject "$TM_VOLUME_NAME"
 	fi
 fi
