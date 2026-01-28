@@ -66,12 +66,11 @@ alias aws='docker run --rm -ti -v ~/.aws:/root/.aws -v $(pwd):/aws amazon/aws-cl
 alias t='task'
 alias tt='taskwarrior-tui'
 alias tw='timew'
-alias tws='timew summary'
-function tws_table () {
+function tw_table () {
 	sed '1d;3d' < /dev/stdin | detect columns --guess $*
 }
-function tws_csv () {
-	tws_table $* '| to csv'
+function tw_csv () {
+	tw_table $* '| to csv'
 }
 
 preexec_task_sync () {
