@@ -15,6 +15,7 @@ brew bundle --global
 
 https://www.gnu.org/software/stow/manual/stow.html
 ```sh
+# TODO: cp *.dist files before symlinking
 stow -R --no-folding */ --simulate -v
 stow -R --no-folding */
 ```
@@ -38,5 +39,5 @@ uv tool install osxphotos
 https://github.com/GothenburgBitFactory/bugwarrior
 ```sh
 # --with setuptools until https://github.com/ralphbean/taskw stop using distutils.version removed from python3.12
-uv tool install 'bugwarrior[keyring]' --with setuptools
+uv tool install 'bugwarrior[jira,keyring]' --with setuptools
 ```

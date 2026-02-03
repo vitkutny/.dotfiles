@@ -1,6 +1,6 @@
 # https://bugwarrior.readthedocs.io/en/stable/common_configuration.html
 [general]
-taskrc = "~/.config/task/taskrc.bugwarrior"
+taskrc = "~/.config/task/taskrc.bugwarrior.cfg"
 
 inline_links = false
 annotation_links = true
@@ -21,8 +21,10 @@ login = "vitkutny"
 token = "@oracle:use_keyring"
 username = "vitkutny"
 project_owner_prefix = true
+description_template = "{% if githubtype == 'pull_request' %}PR{% else %}IS{% endif %}#{{ githubnumber }} - {{ githubtitle }}"
 default_priority = ""
 add_tags = [
+	"github",
 	"work",
 	"work_vitkutny",
 ]

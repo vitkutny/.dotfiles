@@ -1,0 +1,143 @@
+#!/usr/bin/env sh
+
+NEWLINE=$'\n'
+IFS=$NEWLINE
+
+configuration=""
+worklogs=""
+input_state="configuration"
+
+while read input_line; do
+	if [ "$input_line" == "" ]; then
+		input_state="worklogs"
+		continue
+	fi
+
+	if [ "$input_state" == "configuration" ]; then
+		configuration+="$input_line$NEWLINE"
+	elif [ "$input_state" == "worklogs" ]; then
+		worklogs+="$input_line$NEWLINE"
+	fi
+done
+
+function date_from_ISO8601() {
+	# 20260202T112918Z
+	local date_string="$1"
+
+	gdate_input="TZ=\"UTC\" ${date_string:0:4}-${date_string:4:2}-${date_string:6:2} ${date_string:9:2}:${date_string:11:2}:${date_string:13:2}"
+	gdate -d "$gdate_input" ${@:2}
+}
+
+worklogs=($(printf '%s' "$worklogs" | jq --compact-output '.[]'))
+
+for worklog in "${worklogs[@]}"; do
+	worklog_tags=($(printf '%s' "$worklog" | jq -r '.tags[]'))
+	worklog_service=""
+	worklog_project=""
+	worklog_jira_id=""
+
+	for worklog_tag in "${worklog_tags[@]}"; do
+		# simple tags
+		case "$worklog_tag" in
+			jira)
+				worklog_service="$worklog_tag"
+				;;
+		esac
+
+		#_KEY[VALUE] tags
+		if printf '%s' "$worklog_tag" | grep -oE '^_\w+\[\w+\]$' -q; then
+			worklog_tag_key="$(printf '%s' "$worklog_tag" | cut -d '[' -f1 | sed 's/^.//')"
+			worklog_tag_value="$(printf '%s' "$worklog_tag" | cut -d '[' -f2- | sed 's/.$//')"
+
+			case "$worklog_tag_key" in
+				PROJECT)
+					worklog_project="$worklog_tag_value"
+					;;
+				JIRA_ID)
+					worklog_jira_id="$worklog_tag_value"
+					;;
+			esac
+		fi
+	done
+
+	if [ -z "$worklog_service" ]; then
+		continue
+	fi
+
+	worklog_id=($(printf '%s' "$worklog" | jq -r '.id'))
+	echo "Processing: $worklog_service@$worklog_id"
+
+	worklog_end="$(printf '%s' "$worklog" | jq -r '.end')"
+
+	if [ "$worklog_end" = "null" ]; then
+		echo "Skipping: $worklog_service@$worklog_id"
+		continue
+	fi
+
+	worklog_end_time="$(date_from_ISO8601 "$worklog_end" +%s)"
+	worklog_start="$(printf '%s' "$worklog" | jq -r '.start')"
+	worklog_start_time="$(date_from_ISO8601 "$worklog_start" +%s)"
+	worklog_duration_seconds=$((worklog_end_time-worklog_start_time))
+	worklog_annotation="$(printf '%s' "$worklog" | jq -r '.annotation')"
+	worklog_issue_id="$(printf '%s' "$worklog_annotation" | grep -oE '^IS#([0-9]+)' | cut -c 4-)"
+
+	case "$worklog_service" in
+		jira)
+			jira_configuration="$(printf '%s' "$configuration" | grep '^reports.sync.service.jira.')"
+			jira_host=""
+			jira_user=""
+			for worklog_tag in "${worklog_tags[@]}"; do
+				jira_host="$(printf '%s' "$jira_configuration" | grep -F ".host.$worklog_tag: " | cut -d ' ' -f2-)"
+				jira_user="$(printf '%s' "$jira_configuration" | grep -F ".user.$worklog_tag: " | cut -d ' ' -f2-)"
+
+				if ! [ -z "$jira_host" ] || ! [ -z "$jira_user" ]; then
+					break
+				fi
+			done
+
+			if [ -z "$jira_host" ] || [ -z "$jira_user" ]; then
+				echo "Error: $worklog_service@$worklog_id $NEWLINE Undefined host or user" >&2
+				continue
+			fi
+
+
+			# started format: 2026-02-01T12:34:56.000+0000
+			jira_data=$(jq -n \
+				--arg started "$(TZ=UTC gdate -d "@$worklog_start_time" '+%FT%T.000+0000')" \
+				--argjson timeSpentSeconds "$worklog_duration_seconds" \
+				'{started: $started, timeSpentSeconds: $timeSpentSeconds}')
+
+			if [ -z "$worklog_jira_id" ]; then
+				jira_response="$( \
+					curl --fail-with-body -s -X POST "$jira_host/rest/api/3/issue/$worklog_project-$worklog_issue_id/worklog" \
+						--header 'Content-Type: application/json' \
+						--data "$jira_data" \
+						--user "$jira_user" \
+				)"
+
+				if [ "$?" != "0" ]; then
+					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_response" >&2
+					continue
+				fi
+
+				worklog_jira_id="$(printf '%s' "$jira_response" | jq -r '.id')"
+				timew tag "@$worklog_id" "_JIRA_ID[$worklog_jira_id]"
+			else
+				jira_response="$( \
+					curl --fail-with-body -s -X PUT "$jira_host/rest/api/3/issue/$worklog_project-$worklog_issue_id/worklog/$worklog_jira_id" \
+						--header 'Content-Type: application/json' \
+						--data "$jira_data" \
+						--user "$jira_user" \
+				)"
+
+				if [ "$?" != "0" ]; then
+					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_response" >&2
+					continue
+				fi
+			fi
+
+			;;
+	esac
+
+	echo "Synchronized: $worklog_service@$worklog_id"
+done

@@ -62,7 +62,9 @@ fi
 # timew retag when tags are changed
 if [[ "${original_task_tags[@]}" != "${modified_task_tags[@]}" ]]; then
 	timew_ids=$(timew export :all _TASK\["$task_uuid"\] | jq -r 'map("@\(.id)").[]')
-	timew retag $timew_ids ${modified_task_tags[@]} > /dev/null
+	# untag+tag instead of retag allows for tags from timew extensions
+	timew untag $timew_ids ${original_task_tags[@]} > /dev/null
+	timew tag $timew_ids ${modified_task_tags[@]} > /dev/null
 fi
 
 # timew annotate using task description
