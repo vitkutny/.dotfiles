@@ -344,34 +344,32 @@ while true; do
 	elif [ "$selected_action" = "$OPENER" ]; then
 		unset IFS
 		if ! [ -z "$selected_annotation_linked_file" ]; then
-			$selected_action "$selected_annotation_linked_file"
+			exec $selected_action "$selected_annotation_linked_file"
 		else
-			$selected_action "$selected_annotation"
+			exec $selected_action "$selected_annotation"
 		fi
-		IFS=$NEWLINE
-		selected_action=""
-		continue
+
+		exit 1
 	elif [ "$selected_action" = "$COPIER" ]; then
 		unset IFS
 		if mime_type_is_text "$selected_annotation_linked_file_mime_type"; then
-			$selected_action < "$selected_annotation_linked_file"
+			exec $selected_action < "$selected_annotation_linked_file"
 		else
-			$selected_action < "$selected_annotation_file"
+			exec $selected_action < "$selected_annotation_file"
 		fi
-		IFS=$NEWLINE
-		selected_action=""
-		continue
+
+		exit 1
 	fi
 
 	# elif [ "$selected_action" = "$VIEWER" ]; then
 	# else [ "$selected_action" = "$EDITOR" ]:
 	unset IFS
 	if mime_type_is_text "$selected_annotation_linked_file_mime_type"; then
-		$selected_action "$selected_annotation_linked_file"
+		exec $selected_action "$selected_annotation_linked_file"
 	else
-		$selected_action "$selected_annotation_file"
+		exec $selected_action "$selected_annotation_file"
 	fi
-	IFS=$NEWLINE
-	selected_action=""
+
+	exit 1
 done
 
