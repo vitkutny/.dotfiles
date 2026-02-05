@@ -1,6 +1,10 @@
 # https://bugwarrior.readthedocs.io/en/stable/common_configuration.html
 [general]
 taskrc = "~/.config/task/taskrc.bugwarrior.cfg"
+targets = [] # use --flavor=vitkutny instead
+
+[flavor.vitkutny]
+taskrc = "~/.config/task/taskrc.bugwarrior.cfg"
 
 inline_links = false
 annotation_links = true
