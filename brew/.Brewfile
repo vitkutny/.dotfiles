@@ -81,8 +81,11 @@ cask "yaak"
 mas "Actions", id: 1586435171
 mas "Baking Soda", id: 1601151613
 mas "Blackmagic Disk Speed Test", id: 425264550
+mas "CivilizationVII", id: 6744373452
+mas "Infuse", id: 1136220934
 mas "Mic Drop", id: 1489816366
-mas "Numbers", id: 409203825
+mas "Numbers", id: 361304891
+mas "PrettyJSON for Safari", id: 1445328303
 mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
 mas "Vinegar", id: 1591303229
