@@ -22,3 +22,9 @@ export GPG_TTY=$(tty)
 # default commands
 export EDITOR=vim
 export VISUAL=vim
+
+# kubectl
+export KUBECONFIG=$HOME/.kube/config
+for i in $(ls ~/.kube/config.d/*);
+    do export KUBECONFIG=$KUBECONFIG:$i
+done

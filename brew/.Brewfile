@@ -1,4 +1,6 @@
 tap "vcmi/vcmi"
+# Official Amazon AWS command-line interface
+brew "awscli"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
 # GNU File, Shell, and Text utilities
@@ -90,4 +92,5 @@ mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
 mas "Vinegar", id: 1591303229
 mas "Wipr", id: 1662217862
+mas "WireGuard", id: 1451685025
 mas "Xcode", id: 497799835
