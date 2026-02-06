@@ -13,6 +13,10 @@ brew "fzf"
 brew "gnupg"
 # Tool to set default openers for file formats and url schemes on macOS
 brew "infat"
+# Kubernetes CLI To Manage Your Clusters In Style!
+brew "k9s"
+# Tool that can switch between kubectl contexts easily and create aliases
+brew "kubectx"
 # Mac App Store command-line interface
 brew "mas"
 # Like sed, awk, cut, join & sort for name-indexed data such as CSV
