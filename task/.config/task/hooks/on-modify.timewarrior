@@ -34,6 +34,7 @@ fi
 original_task_start=$(printf '%s' "$original_task" | jq -r '.start')
 modified_task_start=$(printf '%s' "$modified_task" | jq -r '.start')
 task_started=0
+task_stopped=0
 
 # task started
 if [ "$original_task_start" = "null" ] && [ "$modified_task_start" != "null" ]; then
@@ -47,6 +48,7 @@ if [ "$original_task_start" = "null" ] && [ "$modified_task_start" != "null" ]; 
 	timew start ${modified_task_tags[@]} > /dev/null
 # task stopped
 elif [ "$original_task_start" != "null" ] && ([ "$modified_task_start" = "null" ] || [ "$(printf '%s' "$modified_task" | jq -r '.end')" != "null" ]); then
+	task_stopped=1
 	# ensure start is removed when task is deleted in active state
 	modified_task="$(printf '%s' "$modified_task" | jq --compact-output 'del(.start)')"
 	modified_task_start="null"
@@ -77,3 +79,6 @@ fi
 
 printf '%s' $modified_task
 
+if [ "$task_started" -eq 1 ] || [ "$task_stopped" -eq 1 ]; then
+	(timew sync @1 > /dev/null 2>&1 &)
+fi
