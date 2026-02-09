@@ -45,9 +45,9 @@ if [ "$original_task_start" = "null" ] && [ "$modified_task_start" != "null" ]; 
 		task stop "$active_task_uuids" > /dev/null # only single active task allowed
 	fi
 
-	timew start ${modified_task_tags[@]} > /dev/null
+	timew start "${modified_task_tags[@]}" > /dev/null
 # task stopped
-elif [ "$original_task_start" != "null" ] && ([ "$modified_task_start" = "null" ] || [ "$(printf '%s' "$modified_task" | jq -r '.end')" != "null" ]); then
+elif [ "$original_task_start" != "null" ] && { [ "$modified_task_start" = "null" ] || [ "$(printf '%s' "$modified_task" | jq -r '.end')" != "null" ]; }; then
 	task_stopped=1
 	# ensure start is removed when task is deleted in active state
 	modified_task="$(printf '%s' "$modified_task" | jq --compact-output 'del(.start)')"
@@ -62,11 +62,11 @@ elif [ "$original_task_start" != "null" ] && ([ "$modified_task_start" = "null" 
 fi
 
 # timew retag when tags are changed
-if [[ "${original_task_tags[@]}" != "${modified_task_tags[@]}" ]]; then
+if [ "${original_task_tags[*]}" != "${modified_task_tags[*]}" ]; then
 	timew_ids=$(timew export :all _TASK\["$task_uuid"\] | jq -r 'map("@\(.id)").[]')
 	# untag+tag instead of retag allows for tags from timew extensions
-	timew untag $timew_ids ${original_task_tags[@]} > /dev/null
-	timew tag $timew_ids ${modified_task_tags[@]} > /dev/null
+	timew untag $timew_ids "${original_task_tags[@]}" > /dev/null
+	timew tag $timew_ids "${modified_task_tags[@]}" > /dev/null
 fi
 
 # timew annotate using task description
@@ -77,8 +77,8 @@ elif [ "$task_started" -eq 1 ]; then
 	timew annotate @1 "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
 fi
 
-printf '%s' $modified_task
+printf '%s' "$modified_task"
 
 if [ "$task_started" -eq 1 ] || [ "$task_stopped" -eq 1 ]; then
-	(timew sync @1 > /dev/null 2>&1 &)
+	timew sync @1 > /dev/null 2>&1
 fi

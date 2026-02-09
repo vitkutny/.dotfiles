@@ -64,13 +64,14 @@ for worklog in "${worklogs[@]}"; do
 		continue
 	fi
 
-	worklog_id=($(printf '%s' "$worklog" | jq -r '.id'))
+	worklog_id="$(printf '%s' "$worklog" | jq -r '.id')"
 	echo "Processing: $worklog_service@$worklog_id"
 
 	worklog_end="$(printf '%s' "$worklog" | jq -r '.end')"
 
 	if [ "$worklog_end" = "null" ]; then
 		echo "Skipping: $worklog_service@$worklog_id"
+		# TODO: change jira task statos to In Progress if assigned ?
 		continue
 	fi
 
@@ -105,7 +106,25 @@ for worklog in "${worklogs[@]}"; do
 			jira_data=$(jq -n \
 				--arg started "$(TZ=UTC gdate -d "@$worklog_start_time" '+%FT%T.000+0000')" \
 				--argjson timeSpentSeconds "$worklog_duration_seconds" \
-				'{started: $started, timeSpentSeconds: $timeSpentSeconds}')
+				'{
+					started: $started,
+					timeSpentSeconds: $timeSpentSeconds,
+					"comment": {
+						"content": [
+							{
+								"content": [
+									{
+										"text": "timewarrior-sync",
+										"type": "text"
+									}
+								],
+								"type": "paragraph"
+							}
+						],
+						"type": "doc",
+						"version": 1
+					}
+				}')
 
 			if [ -z "$worklog_jira_id" ]; then
 				jira_response="$( \
