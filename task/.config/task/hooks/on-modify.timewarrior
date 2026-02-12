@@ -64,15 +64,21 @@ fi
 # timew retag when tags are changed
 if [ "${original_task_tags[*]}" != "${modified_task_tags[*]}" ]; then
 	timew_ids=$(timew export :all _TASK\["$task_uuid"\] | jq -r 'map("@\(.id)").[]')
-	# untag+tag instead of retag allows for tags from timew extensions
-	timew untag $timew_ids "${original_task_tags[@]}" > /dev/null
-	timew tag $timew_ids "${modified_task_tags[@]}" > /dev/null
+
+	if [ -n "$timew_ids" ]; then
+		# untag+tag instead of retag allows for tags from timew extensions
+		timew untag $timew_ids "${original_task_tags[@]}" > /dev/null
+		timew tag $timew_ids "${modified_task_tags[@]}" > /dev/null
+	fi
 fi
 
 # timew annotate using task description
 if [ "$(printf '%s' "$original_task" | jq -r '.description')" != "$(printf '%s' "$modified_task" | jq -r '.description')" ]; then
 	timew_ids=$(timew export :all _TASK\["$task_uuid"\] | jq -r 'map("@\(.id)").[]')
-	timew annotate $timew_ids "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
+
+	if [ -n "$timew_ids" ]; then
+		timew annotate $timew_ids "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
+	fi
 elif [ "$task_started" -eq 1 ]; then
 	timew annotate @1 "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
 fi
