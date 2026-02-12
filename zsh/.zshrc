@@ -44,13 +44,21 @@ function from_table () {
 	sed -e '1d;3d;$d' -e 's/^.//' -e 's/.$//' < /dev/stdin | tr '│' '\t' | nu -c "cat - | from tsv --trim all | reject '#' $*"
 }
 
-function nowrap () {
+function wrap () {
+	local wrap_cols="$1"
+
+	if [ "$wrap_cols" -eq 0 ]; then
+		wrap_cols=65535 # max zsh $COLUMNS size
+	fi
+
 	local tput_cols="$(tput cols)"
 	# stty: stdin isn't a terminal 2>/dev/null
-	stty cols 65535 2>/dev/null # max zsh $COLUMNS size
-	$*
+	stty cols $wrap_cols 2>/dev/null
+	${*:2}
 	stty cols "$tput_cols" 2>/dev/null
 }
+
+alias nowrap='wrap 0'
 
 function timew () {
 	if [ -t 1 ]; then # stdout to terminal
@@ -62,6 +70,13 @@ function timew () {
 }
 
 # aliases
+function aws-profile() {
+  export AWS_PROFILE="$(aws configure list-profiles | fzf)"
+  echo "Switched to profile ""$AWS_PROFILE""."
+}
+alias k='kubectl'
+alias kc='kubectl-ctx'
+alias kn='kubectl-ns'
 alias t='task'
 alias tt='taskwarrior-tui'
 alias tw='timew'

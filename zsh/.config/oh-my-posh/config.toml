@@ -64,3 +64,13 @@ template = '❯'
 [secondary_prompt]
 foreground = 'darkGray'
 template = '❯❯ '
+
+[[tooltips]]
+type = 'aws'
+tips = [ "aws" ]
+#foreground = 'darkGray'
+
+[[tooltips]]
+type = 'kubectl'
+tips = [ "kubectl", "k" ]
+foreground = 'darkGray'
