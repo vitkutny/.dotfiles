@@ -129,7 +129,7 @@ load_tasks
 
 tasks_annotations=()
 load_tasks_annotations() {
-	tasks_annotations=($(printf '%s' "${tasks[*]}" | jq '.annotations.[]?.description' | sort -u))
+	tasks_annotations=($(printf '%s' "${tasks[*]}" | jq '.annotations.[]?.description'))
 
 	if [ ${#tasks[@]} -eq 0 ]; then
 		tasks_annotations+=("\"$tasks_empty\"")
