@@ -9,6 +9,10 @@
 read -r original_task
 read -r modified_task
 
+mkdir -p ~/Library/Logs/taskwarrior
+exec 3>&1 4>&2 >> ~/Library/Logs/taskwarrior/on-modify.timewarrior.log 2>&1
+date
+
 IFS=$'\n' # implode/explode by newline handle tags with spaces
 task_uuid=$(printf '%s' "$modified_task" | jq -r '.uuid')
 original_task_tags=($(printf '%s' "$original_task" | jq -r '.tags[]?'))
@@ -42,10 +46,10 @@ if [ "$original_task_start" = "null" ] && [ "$modified_task_start" != "null" ]; 
 	active_task_uuids=$(task +ACTIVE rc.context=none rc.verbose=off uuids)
 
 	if ! [ -z "$active_task_uuids" ]; then
-		task stop "$active_task_uuids" > /dev/null # only single active task allowed
+		task stop "$active_task_uuids" # only single active task allowed
 	fi
 
-	timew start "${modified_task_tags[@]}" > /dev/null
+	timew start "${modified_task_tags[@]}"
 # task stopped
 elif [ "$original_task_start" != "null" ] && { [ "$modified_task_start" = "null" ] || [ "$(printf '%s' "$modified_task" | jq -r '.end')" != "null" ]; }; then
 	task_stopped=1
@@ -53,11 +57,11 @@ elif [ "$original_task_start" != "null" ] && { [ "$modified_task_start" = "null"
 	modified_task="$(printf '%s' "$modified_task" | jq --compact-output 'del(.start)')"
 	modified_task_start="null"
 
-	if ! timew stop > /dev/null; then
+	if ! timew stop; then
 		# errors if started and stopped in same second
 		# The end of a date range must be after the start.
 		sleep 1
-		timew stop > /dev/null
+		timew stop
 	fi
 fi
 
@@ -67,8 +71,8 @@ if [ "${original_task_tags[*]}" != "${modified_task_tags[*]}" ]; then
 
 	if [ -n "$timew_ids" ]; then
 		# untag+tag instead of retag allows for tags from timew extensions
-		timew untag $timew_ids "${original_task_tags[@]}" > /dev/null
-		timew tag $timew_ids "${modified_task_tags[@]}" > /dev/null
+		timew untag $timew_ids "${original_task_tags[@]}"
+		timew tag $timew_ids "${modified_task_tags[@]}"
 	fi
 fi
 
@@ -77,14 +81,16 @@ if [ "$(printf '%s' "$original_task" | jq -r '.description')" != "$(printf '%s' 
 	timew_ids=$(timew export :all _TASK\["$task_uuid"\] | jq -r 'map("@\(.id)").[]')
 
 	if [ -n "$timew_ids" ]; then
-		timew annotate $timew_ids "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
+		timew annotate $timew_ids "$(printf '%s' "$modified_task" | jq -r '.description')"
 	fi
 elif [ "$task_started" -eq 1 ]; then
-	timew annotate @1 "$(printf '%s' "$modified_task" | jq -r '.description')" > /dev/null
+	timew annotate @1 "$(printf '%s' "$modified_task" | jq -r '.description')"
 fi
-
-printf '%s' "$modified_task"
 
 if [ "$task_started" -eq 1 ] || [ "$task_stopped" -eq 1 ]; then
-	timew sync @1 > /dev/null 2>&1
+	timew sync @1
 fi
+
+exec 1>&3 2>&4
+
+printf '%s' "$modified_task"
