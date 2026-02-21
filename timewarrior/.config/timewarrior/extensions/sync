@@ -67,18 +67,18 @@ for worklog in "${worklogs[@]}"; do
 	worklog_id="$(printf '%s' "$worklog" | jq -r '.id')"
 	echo "Processing: $worklog_service@$worklog_id"
 
+	worklog_start="$(printf '%s' "$worklog" | jq -r '.start')"
+	worklog_start_time="$(date_from_ISO8601 "$worklog_start" +%s)"
 	worklog_end="$(printf '%s' "$worklog" | jq -r '.end')"
 
 	if [ "$worklog_end" = "null" ]; then
-		echo "Skipping: $worklog_service@$worklog_id"
-		# TODO: change jira task statos to In Progress if assigned ?
-		continue
+		worklog_end_time=0
+		worklog_duration_seconds=0
+	else
+		worklog_end_time="$(date_from_ISO8601 "$worklog_end" +%s)"
+		worklog_duration_seconds=$((worklog_end_time-worklog_start_time))
 	fi
 
-	worklog_end_time="$(date_from_ISO8601 "$worklog_end" +%s)"
-	worklog_start="$(printf '%s' "$worklog" | jq -r '.start')"
-	worklog_start_time="$(date_from_ISO8601 "$worklog_start" +%s)"
-	worklog_duration_seconds=$((worklog_end_time-worklog_start_time))
 	worklog_annotation="$(printf '%s' "$worklog" | jq -r '.annotation')"
 	worklog_issue_id="$(printf '%s' "$worklog_annotation" | grep -oE '^IS#([0-9]+)' | cut -c 4-)"
 
@@ -87,9 +87,13 @@ for worklog in "${worklogs[@]}"; do
 			jira_configuration="$(printf '%s' "$configuration" | grep '^reports.sync.service.jira.')"
 			jira_host=""
 			jira_user=""
+			jira_start_transition_id=""
+			jira_start_transition_jql=""
 			for worklog_tag in "${worklog_tags[@]}"; do
 				jira_host="$(printf '%s' "$jira_configuration" | grep -F ".host.$worklog_tag: " | cut -d ' ' -f2-)"
 				jira_user="$(printf '%s' "$jira_configuration" | grep -F ".user.$worklog_tag: " | cut -d ' ' -f2-)"
+				jira_start_transition_id="$(printf '%s' "$jira_configuration" | grep -F ".start_transition_id.$worklog_tag: " | cut -d ' ' -f2-)"
+				jira_start_transition_jql="$(printf '%s' "$jira_configuration" | grep -F ".start_transition_jql.$worklog_tag: " | cut -d ' ' -f2-)"
 
 				if ! [ -z "$jira_host" ] || ! [ -z "$jira_user" ]; then
 					break
@@ -101,14 +105,69 @@ for worklog in "${worklogs[@]}"; do
 				continue
 			fi
 
+			if [ "$worklog_end_time" -eq 0 ]; then
+				# worklog in progress
+				if [ -z "$jira_start_transition_id" ]; then
+					echo "Skipping: $worklog_service@$worklog_id"
+					continue
+				fi
+
+				if [ -n "$jira_start_transition_jql" ]; then
+					# check if issue is matching jql for transition (eg. assignee = "john@example.com")
+					jira_start_transition_jql="key = '$worklog_project-$worklog_issue_id' AND ($jira_start_transition_jql)"
+					jira_start_transition_jql_data=$(jq -n \
+						--arg jql "$jira_start_transition_jql" \
+						'{
+							"jql": $jql,
+						}')
+					jira_start_transition_jql_response="$( \
+						curl --fail-with-body -s -X POST "$jira_host/rest/api/3/search/jql" \
+							--header 'Content-Type: application/json' \
+							--data "$jira_start_transition_jql_data" \
+							--user "$jira_user" \
+					)"
+
+					if [ "$?" != "0" ]; then
+						echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_start_transition_jql_response" >&2
+						continue
+					fi
+
+					if [ "$(printf '%s' "$jira_start_transition_jql_response" | jq '.issues[0]')" = "null" ]; then
+						echo "Skipping: $worklog_service@$worklog_id"
+						continue
+					fi
+				fi
+
+				jira_start_transition_data=$(jq -n \
+					--arg transitionId "$jira_start_transition_id" \
+					'{
+						"transition": {
+							"id": $transitionId,
+						},
+					}')
+				jira_start_transition_response="$( \
+					curl --fail-with-body -s -X POST "$jira_host/rest/api/3/issue/$worklog_project-$worklog_issue_id/transitions" \
+						--header 'Content-Type: application/json' \
+						--data "$jira_start_transition_data" \
+						--user "$jira_user" \
+				)"
+
+				if [ "$?" != "0" ]; then
+					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_start_transition_response" >&2
+					continue
+				fi
+
+				echo "Started: $worklog_service@$worklog_id"
+				continue
+			fi
 
 			# started format: 2026-02-01T12:34:56.000+0000
-			jira_data=$(jq -n \
+			jira_worklog_data=$(jq -n \
 				--arg started "$(TZ=UTC gdate -d "@$worklog_start_time" '+%FT%T.000+0000')" \
 				--argjson timeSpentSeconds "$worklog_duration_seconds" \
 				'{
-					started: $started,
-					timeSpentSeconds: $timeSpentSeconds,
+					"started": $started,
+					"timeSpentSeconds": $timeSpentSeconds,
 					"comment": {
 						"content": [
 							{
@@ -127,30 +186,30 @@ for worklog in "${worklogs[@]}"; do
 				}')
 
 			if [ -z "$worklog_jira_id" ]; then
-				jira_response="$( \
+				jira_worklog_response="$( \
 					curl --fail-with-body -s -X POST "$jira_host/rest/api/3/issue/$worklog_project-$worklog_issue_id/worklog" \
 						--header 'Content-Type: application/json' \
-						--data "$jira_data" \
+						--data "$jira_worklog_data" \
 						--user "$jira_user" \
 				)"
 
 				if [ "$?" != "0" ]; then
-					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_response" >&2
+					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_worklog_response" >&2
 					continue
 				fi
 
-				worklog_jira_id="$(printf '%s' "$jira_response" | jq -r '.id')"
+				worklog_jira_id="$(printf '%s' "$jira_worklog_response" | jq -r '.id')"
 				timew tag "@$worklog_id" "_JIRA_ID[$worklog_jira_id]"
 			else
-				jira_response="$( \
+				jira_worklog_response="$( \
 					curl --fail-with-body -s -X PUT "$jira_host/rest/api/3/issue/$worklog_project-$worklog_issue_id/worklog/$worklog_jira_id" \
 						--header 'Content-Type: application/json' \
-						--data "$jira_data" \
+						--data "$jira_worklog_data" \
 						--user "$jira_user" \
 				)"
 
 				if [ "$?" != "0" ]; then
-					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_response" >&2
+					echo "Error: $worklog_service@$worklog_id $NEWLINE $jira_worklog_response" >&2
 					continue
 				fi
 			fi
