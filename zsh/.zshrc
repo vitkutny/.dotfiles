@@ -74,12 +74,17 @@ function aws-profile() {
   export AWS_PROFILE="$(aws configure list-profiles | fzf)"
   echo "Switched to profile ""$AWS_PROFILE""."
 }
+function dns-flushcache () {
+	sudo dscacheutil -flushcache
+	sudo killall -HUP mDNSResponder
+}
 alias k='kubectl'
 alias kc='kubectl-ctx'
 alias kn='kubectl-ns'
 alias t='task'
 alias tt='taskwarrior-tui'
 alias tw='timew'
+alias to='taskopen'
 function tw_table () {
 	sed '1d;3d' < /dev/stdin | detect columns --guess $*
 }
