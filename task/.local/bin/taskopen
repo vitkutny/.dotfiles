@@ -82,6 +82,10 @@ elif [ -r "/private/etc/apache2/mime.types" ]; then
 	MIME_TYPES="/etc/mime.types"
 fi
 
+if [ -z "$TASKS_FILTER_DEFAULT" ]; then
+	TASKS_FILTER_DEFAULT='+ACTIVE'
+fi
+
 mime_type_get_ext () {
 	if [ -z "$MIME_TYPES" ] || [ "$#" != 1 ]; then
 		return 1
@@ -120,6 +124,11 @@ tasks_annotations_edit='  ...edit annotation'
 tasks_annotations_delete='  ...delete annotation'
 
 tasks_filter="$@"
+
+if [ -z "$tasks_filter" ]; then
+	tasks_filter="$TASKS_FILTER_DEFAULT"
+fi
+
 tasks=()
 load_tasks() {
 	tasks=($(task $tasks_filter export | jq --compact-output '.[]'))
