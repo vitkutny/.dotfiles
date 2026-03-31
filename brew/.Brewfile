@@ -5,6 +5,8 @@ brew "awscli"
 brew "bat"
 # GNU File, Shell, and Text utilities
 brew "coreutils"
+# Tool for exploring each layer in a docker image
+brew "dive"
 # Perl lib for reading and writing EXIF metadata
 brew "exiftool"
 # Command-line fuzzy finder written in Go
@@ -31,6 +33,8 @@ brew "oh-my-posh"
 brew "parallel"
 # Pinentry for GPG on Mac
 brew "pinentry-mac"
+# Implementation of Telnet and SSH
+brew "putty"
 # SMART hard drive monitoring
 brew "smartmontools"
 # Organize software neatly under a single directory tree (e.g. /usr/local)
@@ -60,6 +64,8 @@ cask "crossover"
 # Access and store data messages in a local database
 cask "datovka"
 cask "font-jetbrains-mono"
+# Chromium-based web browser
+cask "helium-browser"
 # Free and open-source media player
 cask "iina"
 # JetBrains tools manager
@@ -89,8 +95,10 @@ mas "Baking Soda", id: 1601151613
 mas "Blackmagic Disk Speed Test", id: 425264550
 mas "CivilizationVII", id: 6744373452
 mas "Infuse", id: 1136220934
+mas "LastPass for Safari", id: 6504626762
 mas "Mic Drop", id: 1489816366
 mas "Numbers", id: 361304891
+mas "Playlisty for Apple Music", id: 1459275972
 mas "PrettyJSON for Safari", id: 1445328303
 mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
@@ -98,3 +106,5 @@ mas "Vinegar", id: 1591303229
 mas "Wipr", id: 1662217862
 mas "WireGuard", id: 1451685025
 mas "Xcode", id: 497799835
+uv "bugwarrior[jira,keyring]", with: ["setuptools"]
+uv "osxphotos"
