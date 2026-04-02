@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # The on-modify event is triggered separately for each task modified. This hook
 # script can accept/reject the modification. Processing will continue.
@@ -17,6 +17,22 @@ IFS=$'\n' # implode/explode by newline handle tags with spaces
 task_uuid=$(printf '%s' "$modified_task" | jq -r '.uuid')
 original_task_tags=($(printf '%s' "$original_task" | jq -r '.tags[]?'))
 modified_task_tags=($(printf '%s' "$modified_task" | jq -r '.tags[]?'))
+ignored_tags=(
+	"next"
+)
+
+for ignored_tag in "${ignored_tags[@]}"; do
+	for original_task_tag_index in "${!original_task_tags[@]}";do
+        if [ "${original_task_tags[$original_task_tag_index]}" = "$ignored_tag" ]; then
+            unset "original_task_tags[$original_task_tag_index]"
+        fi
+    done
+	for modified_task_tag_index in "${!modified_task_tags[@]}";do
+        if [ "${modified_task_tags[$modified_task_tag_index]}" = "$ignored_tag" ]; then
+            unset "modified_task_tags[$modified_task_tag_index]"
+        fi
+    done
+done
 
 # add task uuid to tags
 original_task_tags+=("_TASK[$task_uuid]")
