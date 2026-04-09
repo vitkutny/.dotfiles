@@ -3,7 +3,7 @@
 taskrc = "~/.config/task/taskrc.bugwarrior.cfg"
 targets = [] # use --flavor=vitkutny instead
 
-[flavor.vitkutny]
+[flavor.work_vitkutny]
 taskrc = "~/.config/task/taskrc.bugwarrior.cfg"
 
 inline_links = false

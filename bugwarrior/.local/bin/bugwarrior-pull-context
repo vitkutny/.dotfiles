@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+exec bugwarrior pull --flavor="$(task _show | grep '^context=' | cut -d'=' -f2)"
