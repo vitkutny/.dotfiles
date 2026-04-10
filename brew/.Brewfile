@@ -13,12 +13,16 @@ brew "exiftool"
 brew "fzf"
 # GNU Privacy Guard (OpenPGP)
 brew "gnupg"
+# Kubernetes package manager
+brew "helm"
 # Tool to set default openers for file formats and url schemes on macOS
 brew "infat"
 # Kubernetes CLI To Manage Your Clusters In Style!
 brew "k9s"
 # Tool that can switch between kubectl contexts easily and create aliases
 brew "kubectx"
+# Apple Silicon Monitor Top written in Go Lang
+brew "mactop"
 # Mac App Store command-line interface
 brew "mas"
 # Like sed, awk, cut, join & sort for name-indexed data such as CSV
@@ -82,10 +86,14 @@ cask "mqttx"
 cask "orbstack"
 # Utility to uninstall apps and remove leftover files from old/uninstalled apps
 cask "pearcleaner"
+# Print driver for printing documents directly to a pdf file
+cask "rwts-pdfwriter"
 # Video game digital distribution service
 cask "steam"
 # Free and open-source OpenVPN client
 cask "tunnelblick"
+# Virtual machines UI using QEMU
+cask "utm@beta"
 # Open-source engine for Heroes of Might & Magic III
 cask "vcmi/vcmi/vcmi"
 # REST, GraphQL and gRPC client
@@ -94,6 +102,7 @@ mas "Actions", id: 1586435171
 mas "Baking Soda", id: 1601151613
 mas "Blackmagic Disk Speed Test", id: 425264550
 mas "CivilizationVII", id: 6744373452
+mas "Hlídač Shopů", id: 1488295734
 mas "Infuse", id: 1136220934
 mas "LastPass for Safari", id: 6504626762
 mas "Mic Drop", id: 1489816366
