@@ -1,4 +1,3 @@
-tap "vcmi/vcmi"
 # Official Amazon AWS command-line interface
 brew "awscli"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -35,6 +34,8 @@ brew "nushell"
 brew "oh-my-posh"
 # Shell command parallelization utility
 brew "parallel"
+# General-purpose scripting language
+brew "php"
 # Pinentry for GPG on Mac
 brew "pinentry-mac"
 # Implementation of Telnet and SSH
@@ -57,23 +58,27 @@ brew "tree"
 brew "uv"
 # Executes a program periodically, showing output fullscreen
 brew "watch"
-# Enable Windows-like alt-tab
-cask "alt-tab"
 # Display management tool
 cask "betterdisplay"
 # Virtual Audio Driver
 cask "blackhole-2ch"
 # Tool to run Windows software
 cask "crossover"
+# Databases and SQL IDE
+cask "datagrip"
 # Access and store data messages in a local database
 cask "datovka"
+# Window peeking utility app
+cask "dockdoor"
 cask "font-jetbrains-mono"
+# Update maps and software, sync with Garmin Connect and register your device
+cask "garmin-express"
 # Chromium-based web browser
 cask "helium-browser"
+# Convert your caps lock key or any of your modifier keys to the hyper key
+cask "hyperkey"
 # Free and open-source media player
 cask "iina"
-# JetBrains tools manager
-cask "jetbrains-toolbox"
 # Open-source firewall to block unknown outgoing connections
 cask "lulu"
 # Mouse utility to add gesture functions and smooth scrolling to 3rd party mice
@@ -86,6 +91,8 @@ cask "mqttx"
 cask "orbstack"
 # Utility to uninstall apps and remove leftover files from old/uninstalled apps
 cask "pearcleaner"
+# Apple Notes extension
+cask "pronotes"
 # Print driver for printing documents directly to a pdf file
 cask "rwts-pdfwriter"
 # Video game digital distribution service
@@ -95,11 +102,12 @@ cask "tunnelblick"
 # Virtual machines UI using QEMU
 cask "utm@beta"
 # Open-source engine for Heroes of Might & Magic III
-cask "vcmi/vcmi/vcmi"
+cask "vcmi"
 # REST, GraphQL and gRPC client
 cask "yaak"
+# Multiplayer code editor
+cask "zed"
 mas "Actions", id: 1586435171
-mas "Baking Soda", id: 1601151613
 mas "Blackmagic Disk Speed Test", id: 425264550
 mas "CivilizationVII", id: 6744373452
 mas "Hlídač Shopů", id: 1488295734
@@ -108,10 +116,8 @@ mas "LastPass for Safari", id: 6504626762
 mas "Mic Drop", id: 1489816366
 mas "Numbers", id: 361304891
 mas "Playlisty for Apple Music", id: 1459275972
-mas "PrettyJSON for Safari", id: 1445328303
 mas "rcmd", id: 1596283165
 mas "Reeder", id: 6475002485
-mas "Vinegar", id: 1591303229
 mas "Wipr", id: 1662217862
 mas "WireGuard", id: 1451685025
 mas "Xcode", id: 497799835
