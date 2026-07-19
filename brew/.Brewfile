@@ -1,3 +1,4 @@
+tap "jurplel/tap"
 # Official Amazon AWS command-line interface
 brew "awscli"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -20,8 +21,6 @@ brew "infat"
 brew "k9s"
 # Tool that can switch between kubectl contexts easily and create aliases
 brew "kubectx"
-# Apple Silicon Monitor Top written in Go Lang
-brew "mactop"
 # Mac App Store command-line interface
 brew "mas"
 # Like sed, awk, cut, join & sort for name-indexed data such as CSV
@@ -60,8 +59,6 @@ brew "uv"
 brew "watch"
 # Display management tool
 cask "betterdisplay"
-# Virtual Audio Driver
-cask "blackhole-2ch"
 # Tool to run Windows software
 cask "crossover"
 # Databases and SQL IDE
@@ -87,6 +84,8 @@ cask "mac-mouse-fix"
 cask "macvim-app"
 # Cross-platform MQTT 5.0 Desktop Client
 cask "mqttx"
+# Android file transfer
+cask "openmtp"
 # Replacement for Docker Desktop
 cask "orbstack"
 # Utility to uninstall apps and remove leftover files from old/uninstalled apps
@@ -99,8 +98,6 @@ cask "rwts-pdfwriter"
 cask "steam"
 # Free and open-source OpenVPN client
 cask "tunnelblick"
-# Virtual machines UI using QEMU
-cask "utm@beta"
 # Open-source engine for Heroes of Might & Magic III
 cask "vcmi"
 # REST, GraphQL and gRPC client
@@ -109,7 +106,6 @@ cask "yaak"
 cask "zed"
 mas "Actions", id: 1586435171
 mas "Blackmagic Disk Speed Test", id: 425264550
-mas "CivilizationVII", id: 6744373452
 mas "Hlídač Shopů", id: 1488295734
 mas "Infuse", id: 1136220934
 mas "LastPass for Safari", id: 6504626762

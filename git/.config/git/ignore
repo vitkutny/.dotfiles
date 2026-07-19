@@ -2,7 +2,9 @@
 .vscode/
 .fleet/
 .zed/
+.phpactor.json
 .bin/
 .DS_Store
+.yaak/
 *.swp
 
