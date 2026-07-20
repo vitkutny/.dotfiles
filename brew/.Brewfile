@@ -1,4 +1,3 @@
-tap "jurplel/tap"
 # Official Amazon AWS command-line interface
 brew "awscli"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -11,6 +10,8 @@ brew "dive"
 brew "exiftool"
 # Command-line fuzzy finder written in Go
 brew "fzf"
+# Replace zsh completion selection menu with fzf
+brew "fzf-tab"
 # GNU Privacy Guard (OpenPGP)
 brew "gnupg"
 # Kubernetes package manager

@@ -34,6 +34,11 @@ alignment = 'left'
 newline = true
 
 [[blocks.segments]]
+type = 'text'
+foreground = 'darkGray'
+template = '{{ if .Env.POSH_PATH_PROMPT }}{{ .Env.POSH_PATH_PROMPT }}{{ end }}'
+
+[[blocks.segments]]
 type = 'path'
 foreground = 'default'
 template = '{{ .Path }}'

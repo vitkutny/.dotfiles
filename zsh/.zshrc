@@ -25,7 +25,7 @@ autoload -Uz compinit
 compinit
 
 # https://github.com/Aloxaf/fzf-tab?tab=readme-ov-file#manual
-source ~/.dotfiles/zsh/submodules/fzf-tab/fzf-tab.plugin.zsh
+source "/opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
 
 # https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration
 FZF_ALT_C_COMMAND= source <(fzf --zsh)
