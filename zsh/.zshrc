@@ -30,8 +30,8 @@ autoload -Uz compinit
 compinit
 
 # https://github.com/Aloxaf/fzf-tab?tab=readme-ov-file#manual
-if [ -f /opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh ]; then
-	source "/opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
+if [ -f "$HOMEBREW_PREFIX/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh" ]; then
+	source "$HOMEBREW_PREFIX/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
 fi
 
 # https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration
