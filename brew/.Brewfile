@@ -1,3 +1,5 @@
+# Automatically exclude development dependencies from Time Machine backups
+brew "asimov"
 # Official Amazon AWS command-line interface
 brew "awscli"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -42,6 +44,8 @@ brew "pinentry-mac"
 brew "putty"
 # SMART hard drive monitoring
 brew "smartmontools"
+# Cross-platform application to monitor your network traffic
+brew "sniffnet"
 # Organize software neatly under a single directory tree (e.g. /usr/local)
 brew "stow"
 # Change macOS audio source from the command-line

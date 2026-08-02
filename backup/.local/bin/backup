@@ -83,6 +83,7 @@ UNMOUNT_TM=0
 if ! [ -d "/Volumes/$TM_VOLUME_NAME" ] && diskutil mount "$TM_VOLUME_NAME"; then
 	UNMOUNT_TM=1
 	date
+	asimov
 	tmutil startbackup --block
 	date
 fi
@@ -127,4 +128,3 @@ if [ $DISK_EJECT -eq 1 ]; then
 fi
 
 date | tee -a "$RUN_FILE"
-

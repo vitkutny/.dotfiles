@@ -1,0 +1,10 @@
+[fixed_dirs]
+enabled = true
+extra = ~/Desktop
+extra = ~/Downloads
+extra = ~/OrbStack
+
+[skip_paths]
+extra = ~/Movies
+extra = ~/Music
+extra = ~/Pictures
