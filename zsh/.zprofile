@@ -1,12 +1,13 @@
 # Added by OrbStack: command-line tools and integration
 # This won't be added again if you remove it.
-source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+if [ -f ~/.orbstack/shell/init.zsh ]; then
+	source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+fi
 
-# Added by Toolbox App
-export PATH="$PATH:/Users/vitkutny/Library/Application Support/JetBrains/Toolbox/scripts"
-
-# https://docs.brew.sh/Manpage#shellenv-shell-
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# https://docs.brew.sh/Manpage#s hellenv-shell-
+if [ -f /opt/homebrew/bin/brew ]; then
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 fpath=(
     ~/.local/share/zsh/site-functions
@@ -25,6 +26,9 @@ export VISUAL=vim
 
 # kubectl
 export KUBECONFIG=$HOME/.kube/config
-for i in $(ls ~/.kube/config.d/*);
-    do export KUBECONFIG=$KUBECONFIG:$i
-done
+
+if [ -d ~/.kube/config.d ]; then
+	for i in $(ls ~/.kube/config.d/*);
+	    do export KUBECONFIG=$KUBECONFIG:$i
+	done
+fi

@@ -26,17 +26,23 @@ template = ' [{{ .FormattedMs }}]'
 
 [[blocks.segments]]
 type = 'text'
-template = '{{ if .Env.POSH_TASK_PROMPT }} 💻 {{ .Env.POSH_TASK_PROMPT }}{{ end }}'
+foreground = 'darkGray'
+template = ' 👤 {{ if .Env.POSH_USER_PROMPT }}{{ .Env.POSH_USER_PROMPT }}{{ else }}{{ .UserName }}@{{ .HostName }}{{ end }}'
+
+[[blocks.segments]]
+type = 'text'
+template = '{{ if .Env.POSH_TASK_PROMPT }} 💻 {{ end }}'
+
+[[blocks.segments]]
+type = 'text'
+background = 'lightGreen'
+foreground = 'black'
+template = '{{ if .Env.POSH_TASK_PROMPT }} {{ .Env.POSH_TASK_PROMPT }} {{ end }}'
 
 [[blocks]]
 type = 'prompt'
 alignment = 'left'
 newline = true
-
-[[blocks.segments]]
-type = 'text'
-foreground = 'darkGray'
-template = '{{ if .Env.POSH_PATH_PROMPT }}{{ .Env.POSH_PATH_PROMPT }}{{ end }}'
 
 [[blocks.segments]]
 type = 'path'

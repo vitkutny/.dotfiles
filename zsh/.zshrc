@@ -1,7 +1,12 @@
-eval "$(oh-my-posh init zsh  --config ~/.config/oh-my-posh/config.toml)"
-function set_poshcontext() {
-	export POSH_TASK_PROMPT="$(task rc.context=none rc.verbose=off rc._forcecolor=on prompt 2>/dev/null | xargs)"
-}
+if which oh-my-posh > /dev/null; then
+	eval "$(oh-my-posh init zsh  --config ~/.config/oh-my-posh/config.toml)"
+
+	function set_poshcontext() {
+		if which task > /dev/null; then
+			export POSH_TASK_PROMPT="$(task rc.context=none rc.verbose=off prompt 2>/dev/null | xargs)"
+		fi
+	}
+fi
 
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
 bindkey -e
@@ -25,10 +30,14 @@ autoload -Uz compinit
 compinit
 
 # https://github.com/Aloxaf/fzf-tab?tab=readme-ov-file#manual
-source "/opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
+if [ -f /opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh ]; then
+	source "/opt/homebrew/opt/fzf-tab/share/fzf-tab/fzf-tab.zsh"
+fi
 
 # https://github.com/junegunn/fzf?tab=readme-ov-file#setting-up-shell-integration
-FZF_ALT_C_COMMAND= source <(fzf --zsh)
+if which fzf > /dev/null; then
+	FZF_ALT_C_COMMAND= source <(fzf --zsh)
+fi
 
 # https://www.nushell.sh/commands/docs/detect.html
 function detect () {
@@ -60,52 +69,69 @@ function wrap () {
 
 alias nowrap='wrap 0'
 
-function timew () {
-	if [ -t 1 ]; then # stdout to terminal
-		command timew $*
-	else # output used for processing
-		# override getTerminalWidth for consistent summary https://github.com/GothenburgBitFactory/timewarrior/blob/8cda469a52b270ef3593b27180547f8f7d1ec8ad/src/helper.cpp#L518
-		nowrap command timew $*
-	fi
-}
-
 # aliases
-function aws-profile() {
-  export AWS_PROFILE="$(aws configure list-profiles | fzf)"
-  echo "Switched to profile ""$AWS_PROFILE""."
-}
-function dns-flushcache () {
-	sudo dscacheutil -flushcache
-	sudo killall -HUP mDNSResponder
-}
-alias k='kubectl'
-alias kc='kubectl-ctx'
-alias kn='kubectl-ns'
-alias t='task'
-alias tt='taskwarrior-tui'
-alias tw='timew'
-alias to='taskopen'
-function tw_table () {
-	sed '1d;3d' < /dev/stdin | detect columns --guess $*
-}
-function tw_csv () {
-	tw_table $* '| to csv'
-}
+if which aws > /dev/null; then
+	function aws-profile() {
+	  export AWS_PROFILE="$(aws configure list-profiles | fzf)"
+	  echo "Switched to profile ""$AWS_PROFILE""."
+	}
+fi
 
-preexec_task_sync () {
-	local command="$(echo "$2" | cut -d' ' -f1)"
-	local command_argument="$(echo "$2" | cut -d' ' -f1 -f2)"
+if which dscacheutil > /dev/null; then
+	function dns-flushcache () {
+		sudo dscacheutil -flushcache
+		sudo killall -HUP mDNSResponder
+	}
+fi
+if which kubectl > /dev/null; then
+	alias k='kubectl'
+	alias kc='kubectl-ctx'
+	alias kn='kubectl-ns'
+fi
 
-	if printf '%s' "$command" | grep -Fx -q \
-		-e 'task' \
-		-e 'taskwarrior-tui' \
-		-e 'taskopen' \
-	; then
-		unset -f preexec_task_sync
+if which taskwarrior-tui > /dev/null; then
+	alias tt='taskwarrior-tui'
+fi
+if which taskopen > /dev/null; then
+	alias to='taskopen'
+fi
 
-		if [ "$command_argument" != "task sync" ]; then
-			task sync
+if which timew > /dev/null; then
+	function timew () {
+		if [ -t 1 ]; then # stdout to terminal
+			command timew $*
+		else # output used for processing
+			# override getTerminalWidth for consistent summary https://github.com/GothenburgBitFactory/timewarrior/blob/8cda469a52b270ef3593b27180547f8f7d1ec8ad/src/helper.cpp#L518
+			nowrap command timew $*
 		fi
-	fi
-}
-add-zsh-hook preexec preexec_task_sync
+	}
+
+	alias tw='timew'
+	function tw_table () {
+		sed '1d;3d' < /dev/stdin | detect columns --guess $*
+	}
+	function tw_csv () {
+		tw_table $* '| to csv'
+	}
+fi
+
+if which task > /dev/null; then
+	alias t='task'
+	preexec_task_sync () {
+		local command="$(echo "$2" | cut -d' ' -f1)"
+		local command_argument="$(echo "$2" | cut -d' ' -f1 -f2)"
+
+		if printf '%s' "$command" | grep -Fx -q \
+			-e 'task' \
+			-e 'taskwarrior-tui' \
+			-e 'taskopen' \
+		; then
+			unset -f preexec_task_sync
+
+			if [ "$command_argument" != "task sync" ]; then
+				task sync
+			fi
+		fi
+	}
+	add-zsh-hook preexec preexec_task_sync
+fi
