@@ -97,6 +97,8 @@ cask "orbstack"
 cask "pearcleaner"
 # Apple Notes extension
 cask "pronotes"
+# Sound and audio controller
+cask "proxy-audio-device"
 # Print driver for printing documents directly to a pdf file
 cask "rwts-pdfwriter"
 # Video game digital distribution service

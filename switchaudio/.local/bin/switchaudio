@@ -4,7 +4,7 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 DEFAULT_OUTPUT_NAME="MacBook Pro Speakers"
-WORKROOM_DESK_OUTPUT_NAME="External Headphones"
+WORKROOM_DESK_OUTPUT_NAME="DELL U2724DE"
 WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH=$(( 30 * 60 )) # seconds
 WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED=60 # seconds
 WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH_LOCKED_CHECK_TIME=0
@@ -64,7 +64,7 @@ do
       # audio is playing
       LAST_OUTPUT_ACTIVE_TIME=$(date +%s)
 
-      if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+      if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ] || [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME} Proxy" ]; then
         caffeinate_start # prevents display sleep
       else
         caffeinate_stop
@@ -75,7 +75,7 @@ do
       CURRENT_OUTPUT_ACTIVE_TIME=$(date +%s)
       CURRENT_OUTPUT_ACTIVE_TIME_DIFF=$((CURRENT_OUTPUT_ACTIVE_TIME - LAST_OUTPUT_ACTIVE_TIME))
 
-      if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+      if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ] || [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME} Proxy" ]; then
         if [[ $CURRENT_OUTPUT_ACTIVE_TIME_DIFF -gt $WORKROOM_DESK_OUTPUT_INACTIVE_SWITCH ]]; then
           echo "[$(date)] switching \"${CURRENT_OUTPUT}\" to \"${DEFAULT_OUTPUT_NAME}\" after ${CURRENT_OUTPUT_ACTIVE_TIME_DIFF} seconds of inactivity"
           SwitchAudioSource -s "${DEFAULT_OUTPUT_NAME}"
@@ -99,11 +99,11 @@ do
 
   echo "[$(date)] speaker switched from \"${LAST_OUTPUT}\" to \"${CURRENT_OUTPUT}\""
 
-  if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+  if [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ] || [ "${CURRENT_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME} Proxy" ]; then
     echo "[$(date)] running shortcut \"${WORKROOM_DESK_OUTPUT_SHORTCUTS_ON}\""
     shortcuts run "${WORKROOM_DESK_OUTPUT_SHORTCUTS_ON}" > /dev/null
     sleep ${SWITCH_DETECT_SHORTCUTS_DELAY}
-  elif [ "${LAST_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ]; then
+  elif [ "${LAST_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME}" ] || [ "${LAST_OUTPUT}" = "${WORKROOM_DESK_OUTPUT_NAME} Proxy" ]; then
     echo "[$(date)] running shortcut \"${WORKROOM_DESK_OUTPUT_SHORTCUTS_OFF}\""
     shortcuts run "${WORKROOM_DESK_OUTPUT_SHORTCUTS_OFF}" > /dev/null
     sleep ${SWITCH_DETECT_SHORTCUTS_DELAY}
