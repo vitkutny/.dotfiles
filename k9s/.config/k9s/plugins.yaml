@@ -1,0 +1,75 @@
+plugins:
+  exec:
+    shortCut: Shift-E
+    description: Execute command
+    dangerous: true
+    scopes:
+      - containers
+      - pods
+    command: bash
+    background: false
+    confirm: false
+    inputs:
+      - name: command
+        label: Command to execute
+        type: string
+        required: true
+    args:
+      - -c
+      - >-
+        ARGUMENT_COMMAND=$INPUT_COMMAND
+        ARGUMENT_POD="$(if [ "$POD" = "" ]; then echo "$NAME"; else echo "$POD"; fi)"
+        ARGUMENT_CONTAINER="$(if [ "$POD" != "" ]; then echo "--container=$NAME"; fi)"
+        ; set -x
+        ; kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- $ARGUMENT_COMMAND
+        ; set +x 2>/dev/null
+        ; tail -f /dev/null
+
+  #--- Create debug container for selected pod in current namespace
+  # See https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container
+  debug:
+    shortCut: Shift-D
+    description: Add debug container
+    dangerous: true
+    scopes:
+      - containers
+    command: bash
+    background: false
+    confirm: true
+    inputs:
+      - name: image
+        label: Debug image
+        type: dropdown
+        required: true
+        default: nicolaka/netshoot:latest
+        options:
+          - nicolaka/netshoot:latest
+          - busybox:latest
+          - alpine:latest
+          - ubuntu:latest
+      - name: profile
+        label: Debug profile
+        type: dropdown
+        required: true
+        default: sysadmin
+        options:
+          - general
+          - baseline
+          - restricted
+          - netadmin
+          - sysadmin
+          - legacy
+      - name: share_processes
+        label: Share processes
+        type: bool
+        required: true
+        default: true
+    args:
+      - -c
+      - >-
+        kubectl debug -it --context $CONTEXT -n=$NAMESPACE $POD
+        --target=$NAME
+        --image=$INPUT_IMAGE
+        --profile=$INPUT_PROFILE
+        $([ "$INPUT_SHARE_PROCESSES" = "true" ] && echo "--share-processes")
+        -- sh
