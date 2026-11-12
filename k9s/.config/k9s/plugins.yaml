@@ -22,11 +22,9 @@ plugins:
         ARGUMENT_CONTAINER="$(if [ "$POD" != "" ]; then echo "--container=$NAME"; fi)"
         ; set -x
         ; kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- $ARGUMENT_COMMAND
-        ; set +x 2>/dev/null
+        ; { set +x; } 2>/dev/null
         ; tail -f /dev/null
 
-  #--- Create debug container for selected pod in current namespace
-  # See https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container
   debug:
     shortCut: Shift-D
     description: Add debug container
@@ -35,7 +33,7 @@ plugins:
       - containers
     command: bash
     background: false
-    confirm: true
+    confirm: false
     inputs:
       - name: image
         label: Debug image
@@ -67,9 +65,6 @@ plugins:
     args:
       - -c
       - >-
-        kubectl debug -it --context $CONTEXT -n=$NAMESPACE $POD
-        --target=$NAME
-        --image=$INPUT_IMAGE
-        --profile=$INPUT_PROFILE
-        $([ "$INPUT_SHARE_PROCESSES" = "true" ] && echo "--share-processes")
-        -- sh
+        ARGUMENT_SHARE_PROCESSES=$([ "$INPUT_SHARE_PROCESSES" = "true" ] && echo "--share-processes")
+        ; set -x
+        ; kubectl debug -it --context $CONTEXT -n=$NAMESPACE $POD --target=$NAME --image=$INPUT_IMAGE --profile=$INPUT_PROFILE $ARGUMENT_SHARE_PROCESSES -- sh -c "cd /proc/1/root; exec sh"
