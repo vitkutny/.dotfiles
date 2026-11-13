@@ -9,21 +9,29 @@ plugins:
     command: bash
     background: false
     confirm: false
-    inputs:
-      - name: command
-        label: Command to execute
-        type: string
-        required: true
     args:
       - -c
       - >-
-        ARGUMENT_COMMAND=$INPUT_COMMAND
         ARGUMENT_POD="$(if [ "$POD" = "" ]; then echo "$NAME"; else echo "$POD"; fi)"
         ARGUMENT_CONTAINER="$(if [ "$POD" != "" ]; then echo "--container=$NAME"; fi)"
-        ; set -x
-        ; kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- $ARGUMENT_COMMAND
-        ; { set +x; } 2>/dev/null
-        ; tail -f /dev/null
+        KUBECTL_EXEC="kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- "
+        PROMPT=$( \
+          POSH_USER_PROMPT_DISABLED=1 oh-my-posh print primary --pwd="$KUBECTL_EXEC" 2>/dev/null \
+          || echo -e "[0] $(date +%T)\n$KUBECTL_EXEC" \
+        )
+        ; reset
+        ; while IFS= read -e -r -p "$PROMPT" ARGUMENT_COMMAND; do
+          START_TIME=$(date +%s.%N)
+          eval $KUBECTL_EXEC $ARGUMENT_COMMAND
+          EXIT_CODE=$?
+          END_TIME=$(date +%s.%N)
+          ELAPSED_SECONDS=$(echo "($END_TIME - $START_TIME)" | bc)
+          PROMPT=$( \
+            POSH_USER_PROMPT_DISABLED=1 oh-my-posh print primary --pwd="$KUBECTL_EXEC" --status="$EXIT_CODE" --execution-time="$(echo "$ELAPSED_SECONDS * 1000" | bc)" 2>/dev/null \
+            || echo -e "[$EXIT_CODE] $(date +%T) [$(printf '%.3f' "$ELAPSED_SECONDS")s]\n$KUBECTL_EXEC" \
+          )
+          echo
+        done
 
   debug:
     shortCut: Shift-D
