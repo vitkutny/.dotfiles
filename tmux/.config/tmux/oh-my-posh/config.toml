@@ -1,0 +1,38 @@
+version = 4
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+
+[[blocks.segments]]
+type = 'text'
+background = '#ddd'
+foreground = '#000'
+template = " {{ .Env.session_name }} "
+
+[[blocks]]
+type = 'rprompt'
+alignment = 'left'
+
+[[blocks.segments]]
+type = 'taskwarrior'
+background = '#0f0'
+foreground = '#000'
+template = "{{ if .Commands.Prompt }} 💻 {{ .Commands.Prompt }} {{ end }}"
+
+[blocks.segments.options.commands]
+prompt = "rc.context=none rc.verbose=off rc.color=off prompt"
+
+[[blocks.segments]]
+type = 'text'
+background = 'default'
+foreground = 'default'
+template = " {{ .Env.pane_index }}:{{ .Env.pane_title }} "
+
+[[blocks.segments]]
+type = 'time'
+background = '#ddd'
+foreground = '#000'
+
+[blocks.segments.options]
+time_format = "15:04"

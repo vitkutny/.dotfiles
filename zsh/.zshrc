@@ -1,11 +1,30 @@
+if command -v tmux &> /dev/null && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
+	TMUX_SESSION_PREFIX="$(basename "$PWD")#"
+	# strip invalid characters for tmux session
+	#TMUX_SESSION_PREFIX="${TMUX_SESSION_PREFIX//[:.]/_}"
+	TMUX_SESSION_PREFIX="${TMUX_SESSION_PREFIX//:/꞉}"
+	TMUX_SESSION_PREFIX="${TMUX_SESSION_PREFIX//./․}"
+	TMUX_SESSION_ID=1
+	while tmux has-session -t "${TMUX_SESSION_PREFIX}${TMUX_SESSION_ID}" 2>/dev/null; do
+		((TMUX_SESSION_ID++))
+	done
+	TMUX_SESSION="${TMUX_SESSION_PREFIX}${TMUX_SESSION_ID}"
+	exec tmux new-session -A -s "${TMUX_SESSION}" \
+		-e TMUX_SESSION_ROOT=1 \
+		\; set status-left-length 0 \
+		\; set status-right-length 0 \
+		\; set-option destroy-unattached on \
+		\; set-hook session-renamed 'set-option -u destroy-unattached' \
+	;
+	exit 0
+fi
+
+if [ -n "$TMUX_SESSION_ROOT" ]; then
+	alias tmux='TMUX="" tmux'
+fi
+
 if which oh-my-posh > /dev/null; then
 	eval "$(oh-my-posh init zsh  --config ~/.config/oh-my-posh/config.toml)"
-
-	function set_poshcontext() {
-		if which task > /dev/null; then
-			export POSH_TASK_PROMPT="$(task rc.context=none rc.verbose=off prompt 2>/dev/null | xargs)"
-		fi
-	}
 fi
 
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
@@ -134,4 +153,10 @@ if which task > /dev/null; then
 		fi
 	}
 	add-zsh-hook preexec preexec_task_sync
+	chpwd_tmux_refresh() {
+		if [ -n "$TMUX" ]; then
+			tmux refresh-client -S
+		fi
+	}
+	add-zsh-hook chpwd chpwd_tmux_refresh
 fi

@@ -1,0 +1,86 @@
+#!/usr/bin/env perl -nw
+
+# Converts ANSI color & text formatting escape sequences to TMUX style sequences,
+# merging consecutive escape sequences into a single #[...] block.
+# Example: "\x1b[1;4;31mERROR\x1b[0m" -> "#[bold,underscore,fg=red]ERROR#[default]"
+
+use warnings;
+use strict;
+
+my @colors = ("black", "red", "green", "yellow", "blue", "magenta", "cyan", "white");
+
+my %sgr_map = (
+	0  => "default",
+	1  => "bold",
+	2  => "dim",
+	3  => "italics",
+	4  => "underscore",
+	5  => "blink",
+	6  => "blink",          # Rapid blink (mapped to blink in tmux)
+	7  => "reverse",
+	8  => "hidden",
+	9  => "strikethrough",
+	21 => "double-underscore",
+	22 => "nobold,nodim",
+	23 => "noitalics",
+	24 => "nounderscore",
+	25 => "noblink",
+	27 => "noreverse",
+	28 => "nohidden",
+	29 => "nostrikethrough",
+	53 => "overline",
+	55 => "nooverline",
+);
+
+while (/(.*?)((?:\x1b\[[\d;]*m)+)/gc) {
+	my ($text, $seq_group) = ($1, $2);
+	print $text;
+
+	my @attrs;
+	while ($seq_group =~ /\x1b\[([\d;]*)m/g) {
+		my $codes = $1;
+		if ($codes eq "") {
+			push @attrs, "default";
+			next;
+		}
+
+		my @sgr = split /;/, $codes;
+		for (my $i = 0; $i <= $#sgr; $i++) {
+			next if $sgr[$i] eq "";
+			my $code_num = int($sgr[$i]);
+
+			if (exists $sgr_map{$code_num}) {
+				push @attrs, $sgr_map{$code_num};
+			} elsif ($sgr[$i] =~ /^(3|4|9|10)(\d)$/) {
+				my ($prefix, $code) = ($1, $2);
+				my $attr = ($prefix eq "3")  ? "fg="
+				         : ($prefix eq "4")  ? "bg="
+				         : ($prefix eq "9")  ? "fg=bright"
+				         :                     "bg=bright";
+
+				if ($code eq "8") { # SGR 38 or 48
+					$i++;
+					if ($sgr[$i] eq "5") {
+						$i++;
+						$attr .= "colour" . $sgr[$i];
+					} elsif ($sgr[$i] eq "2") {
+						$attr .= sprintf("#%02X%02X%02X", $sgr[$i + 1], $sgr[$i + 2], $sgr[$i + 3]);
+						$i += 3;
+					} else {
+						die "Invalid SGR 38/48;" . $sgr[$i];
+					}
+				} elsif ($code eq "9") {
+					$attr .= "default";
+				} else {
+					$attr .= $colors[$code];
+				}
+				push @attrs, $attr;
+			}
+		}
+	}
+
+	print "#[" . join(",", @attrs) . "]" if @attrs;
+}
+
+/\G(.*)/gs;
+print "$1";
