@@ -10,6 +10,12 @@ background = '#ddd'
 foreground = '#000'
 template = " {{ .Env.session_name }} "
 
+[[blocks.segments]]
+type = 'text'
+background = '#f00'
+foreground = '#fff'
+template = '{{ if and .Env.detached_session_count (ne .Env.detached_session_count "0") }} +{{ .Env.detached_session_count }}! {{ end }}'
+
 [[blocks]]
 type = 'rprompt'
 alignment = 'left'
