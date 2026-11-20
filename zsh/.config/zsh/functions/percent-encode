@@ -1,0 +1,18 @@
+# percent-encode $1, byte-wise, keeping RFC 3986 unreserved characters literal
+function percent-encode () {
+	emulate -L zsh
+	setopt no_multibyte
+	local str=$1 ch
+	local -i i
+	for (( i = 1; i <= ${#str}; i++ )); do
+		ch=$str[i]
+		if [[ $ch == [A-Za-z0-9._~-] ]]; then
+			REPLY+=$ch
+			continue
+		fi
+		printf -v ch '%%%02X' "'$ch"
+		REPLY+=$ch
+	done
+
+	printf '%s' "$REPLY"
+}

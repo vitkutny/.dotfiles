@@ -21,12 +21,10 @@ plugins:
         KUBECTL_EXEC="kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- "
         ; clear
         ; while IFS= read -e -r -p $'\e]133;A\a'"$KUBECTL_EXEC"$'\e]133;B\a' ARGUMENT_COMMAND; do
-          tmux refresh-client -S
           printf '\e]133;C\a'
           eval $KUBECTL_EXEC $ARGUMENT_COMMAND
           printf '\e]133;D;%s\a' "$?"
           printhr
-          tmux refresh-client -S
         done
 
   debug:

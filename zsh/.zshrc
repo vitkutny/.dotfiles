@@ -166,7 +166,7 @@ PROMPT="%{"$'\e]133;A\a'"%}${PROMPT}%{"$'\e]133;B\a'"%}"
 _osc133_preexec() {
 	_OSC133_CMD_STARTED=1
 	# C: Start of command output
-	printf '\e]133;C\a'
+	printf '\e]133;C;cmdline_url=%s\a' "$(percent-encode "$1")"
 }
 _osc133_precmd() {
 	local exit_status=$?
