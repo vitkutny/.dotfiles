@@ -34,3 +34,5 @@ if [ -d ~/.kube/config.d ]; then
 	    do export KUBECONFIG=$KUBECONFIG:$i
 	done
 fi
+
+export K9S_CONFIG_DIR=$HOME/.config/k9s

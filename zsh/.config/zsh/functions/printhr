@@ -1,0 +1,5 @@
+function printhr () {
+	printf '\e[47m\e[30m';
+	printf "$1" "${*:2}";
+	printf '\e[K\e[0m\n';
+}

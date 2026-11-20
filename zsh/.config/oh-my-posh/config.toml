@@ -8,26 +8,21 @@ newline = true
 
 [[blocks.segments]]
 type = 'status'
-template = '[{{ .String }}]'
+template = '[{{ .String }}] '
 foreground_templates = [ '{{ if .Error }}red{{ else }}green{{ end }}' ]
 
 [blocks.segments.options]
 always_enabled = true
 
 [[blocks.segments]]
-type = 'time'
-foreground = 'yellow'
-template = ' ⏰ {{ .CurrentDate | date .Format }}'
-
-[[blocks.segments]]
 type = 'executiontime'
 foreground = 'yellow'
-template = ' [{{ .FormattedMs }}]'
+template = '[{{ .FormattedMs }}] '
 
 [[blocks.segments]]
 type = 'text'
 foreground = 'darkGray'
-template = '{{ if not .Env.POSH_USER_PROMPT_DISABLED }} 👤 {{ if .Env.POSH_USER_PROMPT }}{{ .Env.POSH_USER_PROMPT }}{{ else }}{{ .UserName }}@{{ .HostName }}{{ end }}{{ end }}'
+template = '{{ if not .Env.POSH_USER_PROMPT_DISABLED }}👤 {{ if .Env.POSH_USER_PROMPT }}{{ .Env.POSH_USER_PROMPT }}{{ else }}{{ .UserName }}@{{ .HostName }}{{ end }}{{ end }}'
 
 [[blocks]]
 type = 'prompt'

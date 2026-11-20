@@ -6,31 +6,36 @@ plugins:
     scopes:
       - containers
       - pods
-    command: bash
+    command: tmux
     background: false
     confirm: false
     args:
+      - new-window
+      - --
+      - bash
       - -c
       - >-
-        ARGUMENT_POD="$(if [ "$POD" = "" ]; then echo "$NAME"; else echo "$POD"; fi)"
+        cleanup () {
+          tmux-execution-reset
+          exit 0
+        }
+        ; source ~/.config/zsh/functions/printhr
+        ; source ~/.config/zsh/functions/tmux-execution-finish
+        ; source ~/.config/zsh/functions/tmux-execution-reset
+        ; trap cleanup INT TERM EXIT
+        ; ARGUMENT_POD="$(if [ "$POD" = "" ]; then echo "$NAME"; else echo "$POD"; fi)"
         ARGUMENT_CONTAINER="$(if [ "$POD" != "" ]; then echo "--container=$NAME"; fi)"
         KUBECTL_EXEC="kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- "
-        PROMPT=$( \
-          POSH_USER_PROMPT_DISABLED=1 oh-my-posh print primary --pwd="$KUBECTL_EXEC" 2>/dev/null \
-          || echo -e "[0] $(date +%T)\n$KUBECTL_EXEC" \
-        )
-        ; reset
-        ; while IFS= read -e -r -p "$PROMPT" ARGUMENT_COMMAND; do
+        ; clear
+        ; while IFS= read -e -r -p "$KUBECTL_EXEC" ARGUMENT_COMMAND; do
           START_TIME=$(date +%s.%N)
+          tmux-execution-reset "$(date +%s)"
           eval $KUBECTL_EXEC $ARGUMENT_COMMAND
           EXIT_CODE=$?
           END_TIME=$(date +%s.%N)
           ELAPSED_SECONDS=$(echo "($END_TIME - $START_TIME)" | bc)
-          PROMPT=$( \
-            POSH_USER_PROMPT_DISABLED=1 oh-my-posh print primary --pwd="$KUBECTL_EXEC" --status="$EXIT_CODE" --execution-time="$(echo "$ELAPSED_SECONDS * 1000" | bc)" 2>/dev/null \
-            || echo -e "[$EXIT_CODE] $(date +%T) [$(printf '%.3f' "$ELAPSED_SECONDS")s]\n$KUBECTL_EXEC" \
-          )
-          echo
+          printhr
+          tmux-execution-finish "$EXIT_CODE" "$EXIT_CODE" "$(echo "$ELAPSED_SECONDS * 1000" | bc)"
         done
 
   debug:

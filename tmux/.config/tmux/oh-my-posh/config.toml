@@ -11,6 +11,27 @@ foreground = '#000'
 template = " {{ .Env.session_name }} "
 
 [[blocks.segments]]
+type = 'status'
+template = ' [{{ .String }}]'
+foreground_templates = [ '{{ if .Error }}red{{ else }}green{{ end }}' ]
+
+[blocks.segments.options]
+always_enabled = true
+
+[[blocks.segments]]
+type = 'time'
+foreground = 'yellow'
+template = "{{ if .Env.execution_timestamp }} [{{ .Env.execution_timestamp | date .Format }}]{{ end }}"
+
+[blocks.segments.options]
+time_format = "15:04"
+
+[[blocks.segments]]
+type = 'executiontime'
+foreground = 'yellow'
+template = ' [{{ .FormattedMs }}]'
+
+[[blocks.segments]]
 type = 'text'
 background = '#f00'
 foreground = '#fff'

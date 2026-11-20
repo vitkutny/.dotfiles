@@ -23,9 +23,33 @@ if [ -n "$TMUX_SESSION_ROOT" ]; then
 	alias tmux='TMUX="" tmux'
 fi
 
-if which oh-my-posh > /dev/null; then
-	eval "$(oh-my-posh init zsh  --config ~/.config/oh-my-posh/config.toml)"
-fi
+# add-zsh-hook
+autoload -Uz add-zsh-hook
+zmodload zsh/datetime # EPOCHREALTIME
+
+# first zsh hook for precision
+precmd_status_capture_set() {
+	local precmd_status_capture_set_time="$EPOCHREALTIME"
+	local last_status="$1"
+	shift
+	local -a last_pipestatus=("$@")
+
+	local last_execution_time
+	if [ -n "$preexec_status_capture_time" ]; then
+		last_execution_time=$(( (precmd_status_capture_set_time - preexec_status_capture_time) * 1000 ))
+		unset preexec_status_capture_time
+	fi
+
+	if [ -n "$preexec_status_capture_command" ]; then
+		unset preexec_status_capture_command
+		printhr
+		tmux-execution-finish "$last_status" "$last_pipestatus" "${last_execution_time%.*}"
+	fi
+}
+precmd_status_capture() {
+	precmd_status_capture_set "$?" "$pipestatus"
+}
+add-zsh-hook precmd precmd_status_capture
 
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
 bindkey -e
@@ -153,10 +177,22 @@ if which task > /dev/null; then
 		fi
 	}
 	add-zsh-hook preexec preexec_task_sync
-	chpwd_tmux_refresh() {
-		if [ -n "$TMUX" ]; then
-			tmux refresh-client -S
-		fi
-	}
-	add-zsh-hook chpwd chpwd_tmux_refresh
 fi
+
+function clear_storage() {
+	tmutil deletelocalsnapshots /
+}
+
+# last zsh hook for precision
+preexec_status_capture() {
+	preexec_status_capture_time="$EPOCHREALTIME"
+	preexec_status_capture_command="$1"
+
+	tmux-execution-reset "$(date +%s)"
+}
+add-zsh-hook preexec preexec_status_capture
+
+fpath=( ~/.config/zsh/functions "${fpath[@]}" )
+autoload -Uz $fpath[1]/*(-.:t)
+
+PROMPT='%~ %# '
