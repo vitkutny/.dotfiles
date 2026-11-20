@@ -25,31 +25,6 @@ fi
 
 # add-zsh-hook
 autoload -Uz add-zsh-hook
-zmodload zsh/datetime # EPOCHREALTIME
-
-# first zsh hook for precision
-precmd_status_capture_set() {
-	local precmd_status_capture_set_time="$EPOCHREALTIME"
-	local last_status="$1"
-	shift
-	local -a last_pipestatus=("$@")
-
-	local last_execution_time
-	if [ -n "$preexec_status_capture_time" ]; then
-		last_execution_time=$(( (precmd_status_capture_set_time - preexec_status_capture_time) * 1000 ))
-		unset preexec_status_capture_time
-	fi
-
-	if [ -n "$preexec_status_capture_command" ]; then
-		unset preexec_status_capture_command
-		printhr
-		tmux-execution-finish "$last_status" "$last_pipestatus" "${last_execution_time%.*}"
-	fi
-}
-precmd_status_capture() {
-	precmd_status_capture_set "$?" "$pipestatus"
-}
-add-zsh-hook precmd precmd_status_capture
 
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
 bindkey -e
@@ -183,16 +158,32 @@ function clear_storage() {
 	tmutil deletelocalsnapshots /
 }
 
-# last zsh hook for precision
-preexec_status_capture() {
-	preexec_status_capture_time="$EPOCHREALTIME"
-	preexec_status_capture_command="$1"
-
-	tmux-execution-reset "$(date +%s)"
-}
-add-zsh-hook preexec preexec_status_capture
-
 fpath=( ~/.config/zsh/functions "${fpath[@]}" )
 autoload -Uz $fpath[1]/*(-.:t)
 
 PROMPT='%~ %# '
+
+# Emit OSC 133 semantic prompt sequences
+_osc133_precmd() {
+	local exit_status=$?
+	# D: End of previous command + exit status (skip on initial shell startup)
+	if [[ -n "$_OSC133_CMD_STARTED" ]]; then
+		unset _OSC133_CMD_STARTED
+		printf '\e]133;D;%s\a' "$exit_status"
+		printhr
+	fi
+}
+
+_osc133_preexec() {
+	_OSC133_CMD_STARTED=1
+	# C: Start of command output
+	printf '\e]133;C\a'
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _osc133_precmd
+add-zsh-hook preexec _osc133_preexec
+
+# A: Start of prompt
+# B: End of prompt / start of user input (%{...%} prevents Zsh cursor miscalculation)
+PROMPT="%{"$'\e]133;A\a'"%}${PROMPT}%{"$'\e]133;B\a'"%}"

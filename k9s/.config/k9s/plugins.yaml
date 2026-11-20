@@ -15,27 +15,18 @@ plugins:
       - bash
       - -c
       - >-
-        cleanup () {
-          tmux-execution-reset
-          exit 0
-        }
-        ; source ~/.config/zsh/functions/printhr
-        ; source ~/.config/zsh/functions/tmux-execution-finish
-        ; source ~/.config/zsh/functions/tmux-execution-reset
-        ; trap cleanup INT TERM EXIT
+        source ~/.config/zsh/functions/printhr
         ; ARGUMENT_POD="$(if [ "$POD" = "" ]; then echo "$NAME"; else echo "$POD"; fi)"
         ARGUMENT_CONTAINER="$(if [ "$POD" != "" ]; then echo "--container=$NAME"; fi)"
         KUBECTL_EXEC="kubectl exec $ARGUMENT_POD $ARGUMENT_CONTAINER -it --context $CONTEXT --namespace=$NAMESPACE -- "
         ; clear
-        ; while IFS= read -e -r -p "$KUBECTL_EXEC" ARGUMENT_COMMAND; do
-          START_TIME=$(date +%s.%N)
-          tmux-execution-reset "$(date +%s)"
+        ; while IFS= read -e -r -p $'\e]133;A\a'"$KUBECTL_EXEC"$'\e]133;B\a' ARGUMENT_COMMAND; do
+          tmux refresh-client -S
+          printf '\e]133;C\a'
           eval $KUBECTL_EXEC $ARGUMENT_COMMAND
-          EXIT_CODE=$?
-          END_TIME=$(date +%s.%N)
-          ELAPSED_SECONDS=$(echo "($END_TIME - $START_TIME)" | bc)
+          printf '\e]133;D;%s\a' "$?"
           printhr
-          tmux-execution-finish "$EXIT_CODE" "$EXIT_CODE" "$(echo "$ELAPSED_SECONDS * 1000" | bc)"
+          tmux refresh-client -S
         done
 
   debug:

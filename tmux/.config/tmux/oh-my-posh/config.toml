@@ -21,7 +21,7 @@ always_enabled = true
 [[blocks.segments]]
 type = 'time'
 foreground = 'yellow'
-template = "{{ if .Env.execution_timestamp }} [{{ .Env.execution_timestamp | date .Format }}]{{ end }}"
+template = '{{ if and .Env.execution_start_time (ne .Env.execution_running "0") }} [{{ .Env.execution_start_time | date .Format }}]{{ end }}'
 
 [blocks.segments.options]
 time_format = "15:04"
@@ -29,7 +29,7 @@ time_format = "15:04"
 [[blocks.segments]]
 type = 'executiontime'
 foreground = 'yellow'
-template = ' [{{ .FormattedMs }}]'
+template = '{{ if ne .Env.execution_running "1" }} [{{ .FormattedMs }}]{{ end }}'
 
 [[blocks.segments]]
 type = 'text'
