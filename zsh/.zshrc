@@ -23,9 +23,6 @@ if [ -n "$TMUX_SESSION_ROOT" ]; then
 	alias tmux='TMUX="" tmux'
 fi
 
-# add-zsh-hook
-autoload -Uz add-zsh-hook
-
 # setting EDITOR to vim also change default zsh bindkey to "bindkey -v" – restore zsh default
 bindkey -e
 
@@ -135,7 +132,7 @@ fi
 
 if which task > /dev/null; then
 	alias t='task'
-	preexec_task_sync () {
+	_task_sync_preexec () {
 		local command="$(echo "$2" | cut -d' ' -f1)"
 		local command_argument="$(echo "$2" | cut -d' ' -f1 -f2)"
 
@@ -144,14 +141,13 @@ if which task > /dev/null; then
 			-e 'taskwarrior-tui' \
 			-e 'taskopen' \
 		; then
-			unset -f preexec_task_sync
+			unset -f _task_sync_preexec
 
 			if [ "$command_argument" != "task sync" ]; then
 				task sync
 			fi
 		fi
 	}
-	add-zsh-hook preexec preexec_task_sync
 fi
 
 function clear_storage() {
@@ -164,6 +160,14 @@ autoload -Uz $fpath[1]/*(-.:t)
 PROMPT='%~ %# '
 
 # Emit OSC 133 semantic prompt sequences
+# A: Start of prompt
+# B: End of prompt / start of user input (%{...%} prevents Zsh cursor miscalculation)
+PROMPT="%{"$'\e]133;A\a'"%}${PROMPT}%{"$'\e]133;B\a'"%}"
+_osc133_preexec() {
+	_OSC133_CMD_STARTED=1
+	# C: Start of command output
+	printf '\e]133;C\a'
+}
 _osc133_precmd() {
 	local exit_status=$?
 	# D: End of previous command + exit status (skip on initial shell startup)
@@ -174,16 +178,14 @@ _osc133_precmd() {
 	fi
 }
 
-_osc133_preexec() {
-	_OSC133_CMD_STARTED=1
-	# C: Start of command output
-	printf '\e]133;C\a'
+_osc2_precmd() {
+    printf "\033]2;%s\033\\" "$HOST"
 }
 
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd _osc133_precmd
+if (( $+functions[_task_sync_preexec] )); then
+	add-zsh-hook preexec _task_sync_preexec
+fi
 add-zsh-hook preexec _osc133_preexec
-
-# A: Start of prompt
-# B: End of prompt / start of user input (%{...%} prevents Zsh cursor miscalculation)
-PROMPT="%{"$'\e]133;A\a'"%}${PROMPT}%{"$'\e]133;B\a'"%}"
+add-zsh-hook precmd _osc133_precmd
+add-zsh-hook precmd _osc2_precmd
